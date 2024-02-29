@@ -1,9 +1,14 @@
 <?php
 
+declare( strict_types = 1 );
+
+namespace Northrook\Logger;
 
 use Northrook\Logger\Log\Entry;
 use Northrook\Logger\Log\Level;
-use Northrook\Logger\StaticClassTrait;
+use Psr\Log as Psr;
+use Stringable;
+use Throwable;
 
 /**
  * @method static void Emergency( string | Stringable $message, array $context = [] )
@@ -15,10 +20,10 @@ use Northrook\Logger\StaticClassTrait;
  * @method static void Info( string | Stringable $message, array $context = [] )
  * @method static void Debug( string | Stringable $message, array $context = [] )
  *
- * @see Psr\Log\LoggerInterface
+ * @see Psr\LoggerInterface
  *
  * @author Martin Nielsen <mn@northrook.com>
- * @version 0.1.0 ☑️
+ * @version 0.1.5 ☑️
  */
 final class Log
 {
@@ -29,7 +34,7 @@ final class Log
 	public static function __callStatic( string $level, array $arguments ) {
 
 		if ( false === in_array( $level, Level::NAMES ) ) {
-			throw new Psr\Log\InvalidArgumentException( 'Invalid log level.' );
+			throw new Psr\InvalidArgumentException( 'Invalid log level.' );
 		}
 
 		$level = Level::fromName( $level );
