@@ -2,7 +2,8 @@
 
 namespace Northrook\Logger;
 
-use Log;
+
+use Northrook\Logger\Facades\StaticClassTrait;
 
 /**
  * @author Martin Nielsen <mn@northrook.com>

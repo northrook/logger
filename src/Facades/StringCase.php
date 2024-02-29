@@ -1,6 +1,6 @@
 <?php
 
-namespace Northrook\Logger;
+namespace Northrook\Logger\Facades;
 
 /**
  * Simple string case converter Enum.

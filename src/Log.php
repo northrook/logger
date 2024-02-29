@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 
 namespace Northrook\Logger;
 
+use Northrook\Logger\Facades\StaticClassTrait;
 use Northrook\Logger\Log\Entry;
 use Northrook\Logger\Log\Level;
 use Psr\Log as Psr;

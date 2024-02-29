@@ -4,8 +4,9 @@ declare( strict_types = 1 );
 
 namespace Northrook\Logger\Log;
 
-use Northrook\Logger\StringCase;
+use Northrook\Logger\Facades\StringCase;
 use Psr\Log\LogLevel;
+use ValueError;
 
 /**
  * PSR-3 compliant {@see LogLevel} Enum.
@@ -71,7 +72,7 @@ enum Level : int
 				return $status;
 			}
 		}
-		throw new \ValueError( "$name is not a valid backing value for enum " . self::class );
+		throw new ValueError( "$name is not a valid backing value for enum " . self::class );
 	}
 
 	/**
