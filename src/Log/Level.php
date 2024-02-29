@@ -67,11 +67,13 @@ enum Level : int
 
 
 	public static function fromName( string $name ) : self {
-		foreach ( self::cases() as $status ) {
-			if ( $name === $status->name ) {
-				return $status;
-			}
+
+		$name = strtoupper( $name );
+
+		if ( array_key_exists( $name, self::cases() ) ) {
+			return self::cases()[ $name ];
 		}
+
 		throw new ValueError( "$name is not a valid backing value for enum " . self::class );
 	}
 
