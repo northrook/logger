@@ -15,6 +15,10 @@ use Northrook\Logger\StaticClassTrait;
  * @method static void Info( string | Stringable $message, array $context = [] )
  * @method static void Debug( string | Stringable $message, array $context = [] )
  *
+ * @see Psr\Log\LoggerInterface
+ *
+ * @author Martin Nielsen <mn@northrook.com>
+ * @version 0.1.0 ☑️
  */
 final class Log
 {

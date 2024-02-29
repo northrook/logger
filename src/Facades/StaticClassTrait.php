@@ -4,6 +4,11 @@ namespace Northrook\Logger;
 
 use LogicException;
 
+/**
+ * Static Class safeguarding.
+ *
+ * @author Martin Nielsen <mn@northrook.com>
+ */
 trait StaticClassTrait
 {
 	private function __construct() {

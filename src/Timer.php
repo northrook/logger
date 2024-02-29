@@ -4,6 +4,9 @@ namespace Northrook\Logger;
 
 use Log;
 
+/**
+ * @author Martin Nielsen <mn@northrook.com>
+ */
 final class Timer
 {
 	use StaticClassTrait;

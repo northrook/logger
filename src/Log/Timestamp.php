@@ -12,6 +12,9 @@ namespace Northrook\Logger\Log;
 use DateTimeImmutable;
 use DateTimeZone;
 
+/**
+ * @author Martin Nielsen <mn@northrook.com>
+ */
 class Timestamp
 {
 

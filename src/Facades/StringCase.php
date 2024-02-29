@@ -2,6 +2,11 @@
 
 namespace Northrook\Logger;
 
+/**
+ * Simple string case converter Enum.
+ *
+ * @author Martin Nielsen <mn@northrook.com>
+ */
 enum StringCase : string
 {
 	case STRTOUPPER = 'strtoupper';

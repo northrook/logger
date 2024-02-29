@@ -4,6 +4,11 @@ namespace Northrook\Logger\Log;
 
 use Stringable;
 
+/**
+ * PSR-3 compliant {@see Log} Entry.
+ *
+ * @author Martin Nielsen <mn@northrook.com>
+ */
 final class Entry
 {
 	public readonly Timestamp $Timestamp;

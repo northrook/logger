@@ -5,7 +5,13 @@ declare( strict_types = 1 );
 namespace Northrook\Logger\Log;
 
 use Northrook\Logger\StringCase;
+use Psr\Log\LogLevel;
 
+/**
+ * PSR-3 compliant {@see LogLevel} Enum.
+ *
+ * @author Martin Nielsen <mn@northrook.com>
+ */
 enum Level : int
 {
 	/**

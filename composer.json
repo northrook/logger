@@ -14,7 +14,7 @@
       "Northrook\\Logger\\": "src/"
     }
   },
-  "minimum-stability": "stable",
+  "minimum-stability": "dev",
   "require": {
     "php": ">=8.1",
     "psr/log": "^3.0"
