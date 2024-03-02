@@ -21,7 +21,10 @@ final class Debug
 	private function __construct(
 		int $limit = 0,
 	) {
-		$this->backtrace = debug_backtrace( DEBUG_BACKTRACE_PROVIDE_OBJECT, $limit );
+		$this->backtrace = array_slice(
+			debug_backtrace( DEBUG_BACKTRACE_PROVIDE_OBJECT, $limit + 2 ),
+			2,
+		);
 	}
 
 	public function getCaller( ?int $key = null ) : string {
@@ -45,9 +48,7 @@ final class Debug
 
 		Log::$method(
 			'Debug Backtrace.',
-			[
-				...$this->backtrace,
-			],
+			[ ...$this->backtrace, ],
 		);
 	}
 
