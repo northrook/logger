@@ -12,14 +12,14 @@ use Stringable;
 use Throwable;
 
 /**
- * @method static void Emergency( string | Stringable $message, array $context = [] )
- * @method static void Alert( string | Stringable $message, array $context = [] )
- * @method static void Critical( string | Stringable $message, array $context = [] )
- * @method static void Error( string | Stringable $message, array $context = [] )
- * @method static void Warning( string | Stringable $message, array $context = [] )
- * @method static void Notice( string | Stringable $message, array $context = [] )
- * @method static void Info( string | Stringable $message, array $context = [] )
- * @method static void Debug( string | Stringable $message, array $context = [] )
+ * @method static Emergency( string | Stringable $message, array $context = [] )
+ * @method static Alert( string | Stringable $message, array $context = [] )
+ * @method static Critical( string | Stringable $message, array $context = [] )
+ * @method static Error( string | Stringable $message, array $context = [] )
+ * @method static Warning( string | Stringable $message, array $context = [] )
+ * @method static Notice( string | Stringable $message, array $context = [] )
+ * @method static Info( string | Stringable $message, array $context = [] )
+ * @method static Debug( string | Stringable $message, array $context = [] )
  *
  * @see Psr\LoggerInterface
  *
