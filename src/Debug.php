@@ -12,7 +12,7 @@ use Northrook\Logger\Log\Level;
  */
 final class Debug
 {
-	private readonly array $backtrace;
+	private array $backtrace;
 
 	public function __invoke() : array {
 		return $this->backtrace;
@@ -40,7 +40,7 @@ final class Debug
 	}
 
 	public function log( ?Level $level = null ) : void {
-		
+
 		$method = $level->name;
 
 		Log::$method(
