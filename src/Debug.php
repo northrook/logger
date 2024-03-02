@@ -13,6 +13,7 @@ use Northrook\Logger\Log\Level;
 final class Debug
 {
 	private array $backtrace;
+	private array $caller;
 
 	public function __invoke() : array {
 		return $this->backtrace;
@@ -22,13 +23,14 @@ final class Debug
 		int $limit = 0,
 	) {
 		$this->backtrace = array_slice(
-			debug_backtrace( DEBUG_BACKTRACE_PROVIDE_OBJECT, $limit + 2 ),
+			debug_backtrace( DEBUG_BACKTRACE_PROVIDE_OBJECT, $limit + 3 ),
 			2,
 		);
+		$this->caller = array_pop( $this->backtrace );
 	}
 
 	public function getCaller( ?int $key = null ) : string {
-		$backtrace = $key ? $this->backtrace[ $key ] : end( $this->backtrace );
+		$backtrace = $key ? $this->backtrace[ $key ] : $this->caller;
 		return $backtrace[ 'class' ] . $backtrace[ 'type' ] . $backtrace[ 'function' ];
 	}
 
