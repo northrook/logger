@@ -1,11 +1,9 @@
 <?php
 
-declare( strict_types = 1 );
+declare ( strict_types = 1 );
 
 namespace Northrook\Logger\Log;
 
-use Northrook\Logger\Facades\StringCase;
-use Psr\Log\LogLevel;
 use ValueError;
 
 /**
@@ -13,63 +11,61 @@ use ValueError;
  *
  * @author Martin Nielsen <mn@northrook.com>
  */
-enum Level : int
-{
-	/**
-	 * Detailed debug information
-	 */
-	case DEBUG = 100;
+enum Level: int {
+/**
+ * Detailed debug information
+ */
+case DEBUG = 100;
 
-	/**
-	 * Interesting events
-	 *
-	 * Examples: User logs in, SQL logs.
-	 */
-	case INFO = 200;
+/**
+ * Interesting events
+ *
+ * Examples: User logs in, SQL logs.
+ */
+case INFO = 200;
 
-	/**
-	 * Uncommon events
-	 */
-	case NOTICE = 250;
+/**
+ * Uncommon events
+ */
+case NOTICE = 250;
 
-	/**
-	 * Exceptional occurrences that are not errors
-	 *
-	 * Examples: Use of deprecated APIs, poor use of an API,
-	 * undesirable things that are not necessarily wrong.
-	 */
-	case WARNING = 300;
+/**
+ * Exceptional occurrences that are not errors
+ *
+ * Examples: Use of deprecated APIs, poor use of an API,
+ * undesirable things that are not necessarily wrong.
+ */
+case WARNING = 300;
 
-	/**
-	 * Runtime errors
-	 */
-	case ERROR = 400;
+/**
+ * Runtime errors
+ */
+case ERROR = 400;
 
-	/**
-	 * Critical conditions
-	 *
-	 * Example: Application component unavailable, unexpected exception.
-	 */
-	case CRITICAL = 500;
+/**
+ * Critical conditions
+ *
+ * Example: Application component unavailable, unexpected exception.
+ */
+case CRITICAL = 500;
 
-	/**
-	 * Action must be taken immediately
-	 *
-	 * Example: Entire website down, database unavailable, etc.
-	 * This should trigger the SMS alerts and wake you up.
-	 */
-	case ALERT = 550;
+/**
+ * Action must be taken immediately
+ *
+ * Example: Entire website down, database unavailable, etc.
+ * This should trigger the SMS alerts and wake you up.
+ */
+case ALERT = 550;
 
-	/**
-	 * Urgent alert.
-	 */
-	case EMERGENCY = 600;
+/**
+ * Urgent alert.
+ */
+case EMERGENCY = 600;
 
-
-	public static function fromName( string $name ) : self {
+	public static function fromName( string $name ): self {
 
 		foreach ( self::cases() as $status ) {
-			if ( strtoupper($name) === $status->name ) {
+			if ( strtoupper( $name ) === $status->name ) {
 				return $status;
 			}
 		}
@@ -77,18 +73,10 @@ enum Level : int
 	}
 
 	/**
-	 * @param  StringCase|null  $case
-	 * @return string
+	 * @return string 
 	 */
-	public function name( ?StringCase $case = null ) : string {
-
-		$name = self::NAMES[ $this->value ];
-
-		if ( $case ) {
-			return ( $case->value )( $name );
-		}
-
-		return $name;
+	public function name(): string {
+		return self::NAMES[$this->value];
 	}
 
 	public const NAMES = [
