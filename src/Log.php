@@ -26,35 +26,35 @@ final class Log
     private static array $inventory = [];
 
     public static function Emergency( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( (string) $message, $context );
+        Log::entry( 'Emergency', [$message, $context] );
     }
 
     public static function Alert( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( (string) $message, $context );
+        Log::entry( 'Alert', [$message, $context] );
     }
 
     public static function Critical( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( (string) $message, $context );
+        Log::entry( 'Critical', [$message, $context] );
     }
 
     public static function Error( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( (string) $message, $context );
+        Log::entry( 'Error', [$message, $context] );
     }
 
     public static function Warning( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( (string) $message, $context );
+        Log::entry( 'Warning', [$message, $context] );
     }
 
     public static function Notice( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( (string) $message, $context );
+        Log::entry( 'Notice', [$message, $context] );
     }
 
     public static function Info( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( (string) $message, $context );
+        Log::entry( 'Info', [$message, $context] );
     }
 
     public static function Debug( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( (string) $message, $context );
+        Log::entry( 'Debug', [$message, $context] );
     }
 
     public static function entry( string $level, array $arguments ) : void {
