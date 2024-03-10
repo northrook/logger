@@ -1,6 +1,6 @@
 <?php
 
-namespace Northrook\Logger\Facades;
+namespace Northrook\Logger\Status;
 
 enum HTTP : int
 {
