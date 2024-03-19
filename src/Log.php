@@ -102,6 +102,10 @@ final class Log
             unset( $arguments[ $index ] );
         }
 
+        if ( $level->value >= 400 && !array_key_exists( 'backtrace', $context ) ) {
+            $context[ 'backtrace' ] = Debug::traceLog();
+        }
+
         Log::$inventory[] = new Entry(
             $message,
             $context,
