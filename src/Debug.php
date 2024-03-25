@@ -90,6 +90,11 @@ final class Debug
                 }
                 $has    = $contains( $key, [ 'src/', 'var/', 'public/', 'vendor/' ] );
                 $needle = array_pop( $has );
+
+                if ( ! $needle ) {
+                    continue;
+                }
+
                 $index  = strstr( $key, $needle );
 
                 if ( strlen( $index ) > 42 ) {
