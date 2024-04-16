@@ -34,7 +34,7 @@ final class Timer
 
     public static function start( string $name, bool $override = false ) : void {
 
-        if ( isset( self::$events[ $name ] ) && !$override ) {
+        if ( isset( Timer::$events[ $name ] ) && !$override ) {
             Log::Warning( 'Timer already started {name}.', [ 'name' => $name ] );
 
             return;

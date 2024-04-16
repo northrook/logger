@@ -64,19 +64,19 @@ case EMERGENCY = 600;
 
 	public static function fromName( string $name ): self {
 
-		foreach ( self::cases() as $status ) {
+		foreach ( Level::cases() as $status ) {
 			if ( strtoupper( $name ) === $status->name ) {
 				return $status;
 			}
 		}
-		throw new ValueError( "$name is not a valid backing value for enum " . self::class );
+		throw new ValueError( "$name is not a valid backing value for enum " . Level::class );
 	}
 
 	/**
 	 * @return string 
 	 */
 	public function name(): string {
-		return self::NAMES[$this->value];
+		return Level::NAMES[ $this->value];
 	}
 
 	public const NAMES = [

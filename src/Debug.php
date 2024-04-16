@@ -50,7 +50,11 @@ final class Debug
 
     public function log( ?Level $level = null ) : void {
 
-        $method = $level->name;
+        $method = $level?->name;
+
+        if ( !$method || !method_exists( $this, $method ) ) {
+            $method = 'Debug';
+        }
 
         Log::$method(
             'Debug Backtrace.',

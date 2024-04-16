@@ -36,7 +36,7 @@ class Timestamp
 		DateTimeZone        $timezone = null,
 	) {
 		$this->timestamp = $this::getUnixTimestamp( $timestamp );
-		$this->TimeZone = $timezone ?? new DateTimeZone( self::DEFAULT_TIMEZONE );
+		$this->TimeZone = $timezone ?? new DateTimeZone( Timestamp::DEFAULT_TIMEZONE );
 	}
 
 	public function __toString() : string {
