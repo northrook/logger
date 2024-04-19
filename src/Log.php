@@ -37,7 +37,7 @@ final class Log
      * @return void
      */
     public static function Emergency( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( 'Emergency', [$message, $context] );
+        Log::entry( Level::EMERGENCY, [ $message, $context ] );
     }
 
     /**
@@ -54,7 +54,7 @@ final class Log
      * @return void
      */
     public static function Alert( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( 'Alert', [$message, $context] );
+        Log::entry( Level::ALERT, [ $message, $context ] );
     }
 
     /**
@@ -70,7 +70,7 @@ final class Log
      * @return void
      */
     public static function Critical( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( 'Critical', [$message, $context] );
+        Log::entry( Level::CRITICAL, [ $message, $context ] );
     }
 
     /**
@@ -85,7 +85,7 @@ final class Log
      * @return void
      */
     public static function Error( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( 'Error', [$message, $context] );
+        Log::entry( Level::ERROR, [ $message, $context ] );
     }
 
     /**
@@ -102,7 +102,7 @@ final class Log
      * @return void
      */
     public static function Warning( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( 'Warning', [$message, $context] );
+        Log::entry( Level::WARNING, [ $message, $context ] );
     }
 
     /**
@@ -116,7 +116,7 @@ final class Log
      * @return void
      */
     public static function Notice( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( 'Notice', [$message, $context] );
+        Log::entry( Level::NOTICE, [ $message, $context ] );
     }
 
     /**
@@ -132,7 +132,7 @@ final class Log
      * @return void
      */
     public static function Info( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( 'Info', [$message, $context] );
+        Log::entry( Level::INFO, [ $message, $context ] );
     }
 
     /**
@@ -146,24 +146,27 @@ final class Log
      * @return void
      */
     public static function Debug( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( 'Debug', [$message, $context] );
+        Log::entry( Level::DEBUG, [ $message, $context ] );
     }
 
     /**
      * Logs with an arbitrary level.
      *
-     * @param mixed  $level
+     * @param string | Level  $level
      * @param array  $arguments
      *
      * @return void
      */
-    public static function entry( string $level, array $arguments ) : void {
+    public static function entry( string | Level $level, array $arguments ) : void {
 
-        if ( false === in_array( $level, Level::NAMES, true ) ) {
-            throw new Psr\InvalidArgumentException( 'Invalid log level.' );
+        if ( is_string( $level ) ) {
+            if ( false === in_array( $level, Level::NAMES, true ) ) {
+                throw new Psr\InvalidArgumentException( 'Invalid log level.' );
+            }
+
+            $level = Level::fromName( $level );
         }
 
-        $level   = Level::fromName( $level );
         $message = '';
         $context = [];
 
@@ -209,7 +212,7 @@ final class Log
         Log::$inventory[] = new Entry(
             $message,
             $context,
-            $level
+            $level,
         );
 
     }
