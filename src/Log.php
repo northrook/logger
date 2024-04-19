@@ -37,7 +37,7 @@ final class Log
      * @return void
      */
     public static function Emergency( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( Level::EMERGENCY, [ $message, $context ] );
+        Log::entry( Level::EMERGENCY, $message, $context );
     }
 
     /**
@@ -54,7 +54,7 @@ final class Log
      * @return void
      */
     public static function Alert( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( Level::ALERT, [ $message, $context ] );
+        Log::entry( Level::ALERT, $message, $context );
     }
 
     /**
@@ -70,7 +70,7 @@ final class Log
      * @return void
      */
     public static function Critical( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( Level::CRITICAL, [ $message, $context ] );
+        Log::entry( Level::CRITICAL, $message, $context );
     }
 
     /**
@@ -85,7 +85,7 @@ final class Log
      * @return void
      */
     public static function Error( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( Level::ERROR, [ $message, $context ] );
+        Log::entry( Level::ERROR, $message, $context );
     }
 
     /**
@@ -102,7 +102,7 @@ final class Log
      * @return void
      */
     public static function Warning( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( Level::WARNING, [ $message, $context ] );
+        Log::entry( Level::WARNING, $message, $context );
     }
 
     /**
@@ -116,7 +116,7 @@ final class Log
      * @return void
      */
     public static function Notice( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( Level::NOTICE, [ $message, $context ] );
+        Log::entry( Level::NOTICE, $message, $context );
     }
 
     /**
@@ -132,7 +132,7 @@ final class Log
      * @return void
      */
     public static function Info( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( Level::INFO, [ $message, $context ] );
+        Log::entry( Level::INFO, $message, $context );
     }
 
     /**
@@ -146,18 +146,19 @@ final class Log
      * @return void
      */
     public static function Debug( string | Stringable $message, array $context = [] ) : void {
-        Log::entry( Level::DEBUG, [ $message, $context ] );
+        Log::entry( Level::DEBUG, $message, $context );
     }
 
     /**
      * Logs with an arbitrary level.
      *
-     * @param string | Level  $level
-     * @param array  $arguments
+     * @param string | Level     $level
+     * @param string|Stringable  $message
+     * @param array              $context
      *
      * @return void
      */
-    public static function entry( string | Level $level, array $arguments ) : void {
+    public static function entry( string | Level $level, string | Stringable $message, array $context = [] ) : void {
 
         if ( is_string( $level ) ) {
             if ( false === in_array( $level, Level::NAMES, true ) ) {
@@ -167,42 +168,31 @@ final class Log
             $level = Level::fromName( $level );
         }
 
-        $message = '';
-        $context = [];
+        foreach ( $context as $index => $argument ) {
 
-        foreach ( $arguments as $index => $argument ) {
-            if (
-                is_string( $argument )
-                ||
-                ( $argument instanceof Stringable && !$argument instanceof Throwable )
-            ) {
-                $message = $argument;
-                unset( $arguments[ $index ] );
-                continue;
-            }
-
-            if ( is_array( $argument ) ) {
-                $context = $argument;
-                unset( $arguments[ $index ] );
+            if ( $argument instanceof Stringable && !$argument instanceof Throwable ) {
+                $context[ $index ] = (string) $argument;
                 continue;
             }
 
             if ( $argument instanceof Throwable ) {
-                $context[ 'exception' ] = $argument;
 
-                unset( $arguments[ $index ] );
-
-                if ( array_key_exists( 'exception', $arguments ) ) {
-                    if ( $arguments[ 'exception' ] !== $context[ 'exception' ] ) {
-                        $context[] = $arguments[ 'exception' ];
-                    }
-                    unset( $arguments[ 'exception' ] );
+                if ( $index === 'exception' ) {
+                    continue;
                 }
-                continue;
-            }
 
-            $context[] = $argument;
-            unset( $arguments[ $index ] );
+                if ( array_key_exists( 'exception', $context ) ) {
+                    if ( $argument === $context[ 'exception' ] ) {
+                        unset( $context[ $index ] );
+                    }
+                    else {
+                        continue;
+                    }
+                }
+
+                unset( $context[ $index ] );
+                $context[ 'exception' ] = $argument;
+            }
         }
 
         if ( $level->value >= 400 && !array_key_exists( 'backtrace', $context ) ) {
