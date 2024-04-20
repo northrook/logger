@@ -196,7 +196,7 @@ final class Log
         }
 
         if ( $level->value >= 400 && !array_key_exists( 'backtrace', $context ) ) {
-            $context[ 'backtrace' ] = Debug::traceLog();
+            $context[ 'backtrace' ] = Log::backtrace();
         }
 
         Log::$inventory[] = new Entry(
@@ -209,5 +209,50 @@ final class Log
 
     public static function inventory() : array {
         return Log::$inventory;
+    }
+
+    private static function backtrace() : array {
+
+        $contains = static function (
+            string $string,
+            array  $needle,
+        ) : array {
+
+            $contains = [];
+            $search   = strtolower( $string );
+
+            foreach ( $needle as $value ) {
+                if ( substr_count( $search, strtolower( $value ) ) ) {
+                    $contains[] = $value;
+                }
+            }
+
+            return $contains;
+        };
+
+        $backtrace = [];
+
+        foreach ( array_slice( debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS ), 2 ) as $index => $trace ) {
+            if ( array_key_exists( 'file', $trace ) ) {
+                $key = strtr( $trace[ 'file' ], '\\', '/' );
+                if ( str_ends_with( $key, 'vendor/symfony/http-kernel/HttpKernel.php' ) ) {
+                    break;
+                }
+                $has    = $contains( $key, [ 'src/', 'var/', 'public/', 'vendor/' ] );
+                $needle = array_pop( $has );
+
+                if ( !$needle ) {
+                    continue;
+                }
+
+                $index = strstr( $key, $needle );
+
+                if ( strlen( $index ) > 42 ) {
+                    $index = '..' . strstr( substr( $index, -42 ), '/' ) ?: strrchr( $index, '/' );
+                }
+            }
+            $backtrace[ $index ] = $trace;
+        }
+        return $backtrace;
     }
 }
