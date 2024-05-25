@@ -46,6 +46,7 @@ final class Timer
 
     public static function stop( string $name ) : ?int {
 
+
         if ( !isset( Timer::$events[ $name ] ) && Timer::$events[ $name ][ 'running' ] ) {
             Log::Warning(
                 'Timer not started {name}.',
@@ -58,18 +59,24 @@ final class Timer
             return null;
         }
 
-        $time = hrtime( true ) - Timer::$events[ $name ][ 'running' ];
+        $event = Timer::$events[ $name ];
 
-        Timer::$events[ $name ] = $time;
+        if ( isset( $event[ 'running' ] ) ) {
+            $time = hrtime( true ) - Timer::$events[ $name ][ 'running' ];
 
-        return $time;
+            return Timer::$events[ $name ] = $time;
+        }
+
+        Log::Warning( 'No timer running for {name}.', [ 'name' => $name, 'event' => $event ] );
+
+        return is_int( $event ) ? $event : null;
 
     }
 
     public static function get(
-        string     $event,
-        int | bool $format = Timer::FORMAT_MS,
-        bool       $stop = true,
+        string      $event,
+        int | false $format = Timer::FORMAT_MS,
+        bool        $stop = true,
     ) : null | string | float | int {
         if ( !isset( Timer::$events[ $event ] ) ) {
             Log::Warning(
@@ -105,8 +112,17 @@ final class Timer
 
     }
 
-    public static function getAll() : array {
-        return Timer::$events;
+    public static function getAll(
+        int | false $format = Timer::FORMAT_MS,
+        bool        $stop = true,
+    ) : array {
+        $events = [];
+
+        foreach ( Timer::$events as $name => $event ) {
+            $events[ $name ] = Timer::get( $name, $format, $stop ) . ' ms';
+        }
+
+        return $events;
     }
 
 }

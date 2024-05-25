@@ -4,6 +4,8 @@ declare ( strict_types = 1 );
 
 namespace Northrook\Logger;
 
+use JetBrains\PhpStorm\ExpectedValues;
+use JetBrains\PhpStorm\Language;
 use Northrook\Logger\Log\Entry;
 use Northrook\Logger\Log\Level;
 use Psr\Log as Psr;
@@ -28,7 +30,7 @@ final class Log
     private static array $inventory = [];
 
     /**
-     * # 7 | `600`
+     * # `7` Emergency | `600`
      * System is unusable.
      *
      * @param string|Stringable  $message
@@ -36,12 +38,16 @@ final class Log
      *
      * @return void
      */
-    public static function Emergency( string | Stringable $message, array $context = [] ) : void {
+    public static function Emergency(
+        #[Language( 'Smarty' )]
+        string | Stringable $message,
+        array               $context = [],
+    ) : void {
         Log::entry( Level::EMERGENCY, $message, $context );
     }
 
     /**
-     * # `6` | `550`
+     * # `6` Alert | `550`
      *
      * Action must be taken immediately.
      *
@@ -53,12 +59,16 @@ final class Log
      *
      * @return void
      */
-    public static function Alert( string | Stringable $message, array $context = [] ) : void {
+    public static function Alert(
+        #[Language( 'Smarty' )]
+        string | Stringable $message,
+        array               $context = [],
+    ) : void {
         Log::entry( Level::ALERT, $message, $context );
     }
 
     /**
-     * # `5` | `500`
+     * # `5` Critical | `500`
      *
      * Critical conditions.
      *
@@ -69,12 +79,16 @@ final class Log
      *
      * @return void
      */
-    public static function Critical( string | Stringable $message, array $context = [] ) : void {
+    public static function Critical(
+        #[Language( 'Smarty' )]
+        string | Stringable $message,
+        array               $context = [],
+    ) : void {
         Log::entry( Level::CRITICAL, $message, $context );
     }
 
     /**
-     * # `4` | `400`
+     * # `4` Error | `400`
      *
      * Runtime errors that do not require immediate action but should typically
      * be logged and monitored.
@@ -84,12 +98,16 @@ final class Log
      *
      * @return void
      */
-    public static function Error( string | Stringable $message, array $context = [] ) : void {
+    public static function Error(
+        #[Language( 'Smarty' )]
+        string | Stringable $message,
+        array               $context = [],
+    ) : void {
         Log::entry( Level::ERROR, $message, $context );
     }
 
     /**
-     * # `3` | `300`
+     * # `3` Warning | `300`
      *
      * Exceptional occurrences that are not errors.
      *
@@ -101,12 +119,16 @@ final class Log
      *
      * @return void
      */
-    public static function Warning( string | Stringable $message, array $context = [] ) : void {
+    public static function Warning(
+        #[Language( 'Smarty' )]
+        string | Stringable $message,
+        array               $context = [],
+    ) : void {
         Log::entry( Level::WARNING, $message, $context );
     }
 
     /**
-     * # `2` | `250`
+     * # `2` Notice | `250`
      *
      * Normal but significant events.
      *
@@ -115,12 +137,16 @@ final class Log
      *
      * @return void
      */
-    public static function Notice( string | Stringable $message, array $context = [] ) : void {
+    public static function Notice(
+        #[Language( 'Smarty' )]
+        string | Stringable $message,
+        array               $context = [],
+    ) : void {
         Log::entry( Level::NOTICE, $message, $context );
     }
 
     /**
-     * # `1` | `200`
+     * # `1` Info | `200`
      *
      * Interesting events.
      *
@@ -131,12 +157,16 @@ final class Log
      *
      * @return void
      */
-    public static function Info( string | Stringable $message, array $context = [] ) : void {
+    public static function Info(
+        #[Language( 'Smarty' )]
+        string | Stringable $message,
+        array               $context = [],
+    ) : void {
         Log::entry( Level::INFO, $message, $context );
     }
 
     /**
-     * # `0` | `100`
+     * # `0` Debug | `100`
      *
      * Detailed debug information.
      *
@@ -145,20 +175,29 @@ final class Log
      *
      * @return void
      */
-    public static function Debug( string | Stringable $message, array $context = [] ) : void {
+    public static function Debug(
+        #[Language( 'Smarty' )]
+        string | Stringable $message,
+        array               $context = [],
+    ) : void {
         Log::entry( Level::DEBUG, $message, $context );
     }
 
     /**
      * Logs with an arbitrary level.
      *
-     * @param string | Level     $level
+     * @param string | Level     $level  = [ 'emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info', 'debug' ][$any]
      * @param string|Stringable  $message
      * @param array              $context
      *
      * @return void
      */
-    public static function entry( string | Level $level, string | Stringable $message, array $context = [] ) : void {
+    public static function Entry(
+        string | Level      $level,
+        #[Language( 'Smarty' )]
+        string | Stringable $message,
+        array               $context = [],
+    ) : void {
 
         if ( is_string( $level ) ) {
             if ( false === in_array( $level, Level::NAMES, true ) ) {
