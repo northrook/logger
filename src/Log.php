@@ -4,6 +4,7 @@ declare ( strict_types = 1 );
 
 namespace Northrook\Logger;
 
+use JetBrains\PhpStorm\Deprecated;
 use JetBrains\PhpStorm\ExpectedValues;
 use JetBrains\PhpStorm\Language;
 use Northrook\Logger\Log\Entry;
@@ -199,13 +200,7 @@ final class Log
         array               $context = [],
     ) : void {
 
-        if ( is_string( $level ) ) {
-            if ( false === in_array( $level, Level::NAMES, true ) ) {
-                throw new Psr\InvalidArgumentException( 'Invalid log level.' );
-            }
-
-            $level = Level::fromName( $level );
-        }
+        $level = Log::getLevel( $level );
 
         foreach ( $context as $index => $argument ) {
 
@@ -246,8 +241,48 @@ final class Log
 
     }
 
+    /**
+     * Retrieve all {@see Log::$inventory} entries.
+     *
+     * @return array<Entry>
+     */
+    public static function getAll( bool $clear = false ) : array {
+
+        if ( $clear ) {
+            $inventory = Log::$inventory;
+            Log::$inventory = [];
+            return $inventory;
+        }
+
+        return Log::$inventory;
+    }
+
+    /**
+     * @param string | Level  $level  = [ 'emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info', 'debug' ][$any]
+     *
+     * @return array<Entry>
+     */
+    public static function get( string | Level $level ) : array {
+        $level = Log::getLevel( $level );
+        return array_filter( Log::$inventory, static fn ( Entry $entry ) => $entry->level === $level );
+    }
+
+    #[Deprecated( 'Use getAll() instead.', replacement : '%class%::getAll()' )]
     public static function inventory() : array {
         return Log::$inventory;
+    }
+
+
+    private static function getLevel( string | Level $level ) : Level {
+        if ( is_string( $level ) ) {
+            if ( false === in_array( $level, Level::NAMES, true ) ) {
+                throw new Psr\InvalidArgumentException( 'Invalid log level.' );
+            }
+
+            return Level::fromName( $level );
+        }
+
+        return $level;
     }
 
     private static function backtrace() : array {
