@@ -47,7 +47,7 @@ final class Timer
     public static function stop( string $name ) : ?int {
 
 
-        if ( isset( Timer::$events[ $name ] ) && Timer::$events[ $name ][ 'running' ] ?? false ) {
+        if ( isset( Timer::$events[ $name ] ) && !Timer::$events[ $name ][ 'running' ] ?? false ) {
             Log::Warning(
                 'Timer not started {name}.',
                 [
