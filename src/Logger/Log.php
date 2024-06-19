@@ -4,32 +4,28 @@ declare ( strict_types = 1 );
 
 namespace Northrook\Logger;
 
-use JetBrains\PhpStorm\Deprecated;
-use JetBrains\PhpStorm\ExpectedValues;
 use JetBrains\PhpStorm\Language;
-use Northrook\Logger\Log\Entry;
-use Northrook\Logger\Log\Level;
 use Psr\Log as Psr;
+use Psr\Log\LoggerInterface;
 use Stringable;
 use Throwable;
 
 /**
- * # `7` | `600`
  *
  * Log events to the {@see Log::$inventory}.
  *
- * * Events are compliant with the {@see Psr\LoggerInterface}.
+ * - Events are compliant with the {@see Psr\LoggerInterface}.
  *
  * @author  Martin Nielsen <mn@northrook.com>
  *
  * @link    https://github.com/northrook/logger
- * @todo    Provide link to documentation
  */
 final class Log
 {
+    /**
+     * @var LoggerInterface
+     */
     private static Psr\LoggerInterface $logger;
-
-    private static array $inventory = [];
 
     public function __construct( ?Psr\LoggerInterface $logger = null ) {
 
@@ -40,6 +36,52 @@ final class Log
         Log::$logger = $logger;
     }
 
+    /**
+     * # `E` Exception
+     * System has experienced an error.
+     *
+     * @param Throwable          $exception
+     * @param null|string|Level  $level
+     * @param null|string        $message
+     *
+     * @return void
+     */
+    public static function exception(
+        Throwable             $exception,
+        null | string | Level $level = null,
+        ?string               $message = null,
+        array                 $context = []
+    ) : void {
+
+        $exceptionMessage = $exception->getMessage();
+        $exceptionLevel   = strstr( $exceptionMessage, ':', true );
+
+        if ( $exceptionLevel ) {
+            $exceptionLevel   = Level::fromName( $exceptionLevel );
+            $exceptionMessage = substr( $exceptionMessage, strpos( $exceptionMessage, ':' ) + 1 );
+        }
+        else {
+            $exceptionLevel = Level::ERROR;
+        }
+
+        $level   ??= $exceptionLevel;
+        $message ??= $exceptionMessage;
+
+        if ( ! $message ) {
+            $type = get_debug_type( $exception );
+            $line = $exception->getLine();
+            $file = $exception->getFile();
+            $message = "$type thrown at line $line in $file. Trace: " . $exception->getTraceAsString();
+        }
+
+        $context['exception'] = $exception;
+
+        Log::entry(
+            $level,
+            $message,
+            $context
+        );
+    }
 
     /**
      * # `7` Emergency | `600`
@@ -50,7 +92,7 @@ final class Log
      *
      * @return void
      */
-    public static function Emergency(
+    public static function emergency(
         #[Language( 'Smarty' )]
         string | Stringable $message,
         array               $context = [],
@@ -71,7 +113,7 @@ final class Log
      *
      * @return void
      */
-    public static function Alert(
+    public static function alert(
         #[Language( 'Smarty' )]
         string | Stringable $message,
         array               $context = [],
@@ -91,7 +133,7 @@ final class Log
      *
      * @return void
      */
-    public static function Critical(
+    public static function critical(
         #[Language( 'Smarty' )]
         string | Stringable $message,
         array               $context = [],
@@ -110,7 +152,7 @@ final class Log
      *
      * @return void
      */
-    public static function Error(
+    public static function error(
         #[Language( 'Smarty' )]
         string | Stringable $message,
         array               $context = [],
@@ -131,7 +173,7 @@ final class Log
      *
      * @return void
      */
-    public static function Warning(
+    public static function warning(
         #[Language( 'Smarty' )]
         string | Stringable $message,
         array               $context = [],
@@ -149,7 +191,7 @@ final class Log
      *
      * @return void
      */
-    public static function Notice(
+    public static function notice(
         #[Language( 'Smarty' )]
         string | Stringable $message,
         array               $context = [],
@@ -169,7 +211,7 @@ final class Log
      *
      * @return void
      */
-    public static function Info(
+    public static function info(
         #[Language( 'Smarty' )]
         string | Stringable $message,
         array               $context = [],
@@ -187,7 +229,7 @@ final class Log
      *
      * @return void
      */
-    public static function Debug(
+    public static function debug(
         #[Language( 'Smarty' )]
         string | Stringable $message,
         array               $context = [],
@@ -204,85 +246,21 @@ final class Log
      *
      * @return void
      */
-    public static function Entry(
+    public static function entry(
         string | Level      $level,
         #[Language( 'Smarty' )]
         string | Stringable $message,
         array               $context = [],
     ) : void {
-
-        $level = Log::getLevel( $level );
-
-        foreach ( $context as $index => $argument ) {
-
-            if ( $argument instanceof Stringable && !$argument instanceof Throwable ) {
-                $context[ $index ] = (string) $argument;
-                continue;
-            }
-
-            if ( $argument instanceof Throwable ) {
-
-                if ( $index === 'exception' ) {
-                    continue;
-                }
-
-                if ( array_key_exists( 'exception', $context ) ) {
-                    if ( $argument === $context[ 'exception' ] ) {
-                        unset( $context[ $index ] );
-                    }
-                    else {
-                        continue;
-                    }
-                }
-
-                unset( $context[ $index ] );
-                $context[ 'exception' ] = $argument;
-            }
-        }
-
-        if ( $level->value >= 400 && !array_key_exists( 'backtrace', $context ) ) {
-            $context[ 'backtrace' ] = Log::backtrace();
-        }
-
-        Log::$inventory[] = new Entry(
-            $message,
-            $context,
-            $level,
+        Log::getLogger()->log(
+            Log::getLevel( $level )->name(),
+            $message, $context,
         );
-
     }
 
-    /**
-     * Retrieve all {@see Log::$inventory} entries.
-     *
-     * @return array<Entry>
-     */
-    public static function getAll( bool $clear = false ) : array {
-
-        if ( $clear ) {
-            $inventory = Log::$inventory;
-            Log::$inventory = [];
-            return $inventory;
-        }
-
-        return Log::$inventory;
+    public static function getLogger() : Psr\LoggerInterface {
+        return Log::$logger ??= new \Northrook\Logger();
     }
-
-    /**
-     * @param string | Level  $level  = [ 'emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info', 'debug' ][$any]
-     *
-     * @return array<Entry>
-     */
-    public static function get( string | Level $level ) : array {
-        $level = Log::getLevel( $level );
-        return array_filter( Log::$inventory, static fn ( Entry $entry ) => $entry->level === $level );
-    }
-
-    #[Deprecated( 'Use getAll() instead.', replacement : '%class%::getAll()' )]
-    public static function inventory() : array {
-        return Log::$inventory;
-    }
-
 
     private static function getLevel( string | Level $level ) : Level {
         if ( is_string( $level ) ) {
@@ -294,50 +272,5 @@ final class Log
         }
 
         return $level;
-    }
-
-    private static function backtrace() : array {
-
-        $contains = static function (
-            string $string,
-            array  $needle,
-        ) : array {
-
-            $contains = [];
-            $search   = strtolower( $string );
-
-            foreach ( $needle as $value ) {
-                if ( substr_count( $search, strtolower( $value ) ) ) {
-                    $contains[] = $value;
-                }
-            }
-
-            return $contains;
-        };
-
-        $backtrace = [];
-
-        foreach ( array_slice( debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS ), 2 ) as $index => $trace ) {
-            if ( array_key_exists( 'file', $trace ) ) {
-                $key = strtr( $trace[ 'file' ], '\\', '/' );
-                if ( str_ends_with( $key, 'vendor/symfony/http-kernel/HttpKernel.php' ) ) {
-                    break;
-                }
-                $has    = $contains( $key, [ 'src/', 'var/', 'public/', 'vendor/' ] );
-                $needle = array_pop( $has );
-
-                if ( !$needle ) {
-                    continue;
-                }
-
-                $index = strstr( $key, $needle );
-
-                if ( strlen( $index ) > 42 ) {
-                    $index = '..' . strstr( substr( $index, -42 ), '/' ) ?: strrchr( $index, '/' );
-                }
-            }
-            $backtrace[ $index ] = $trace;
-        }
-        return $backtrace;
     }
 }

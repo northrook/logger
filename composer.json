@@ -11,13 +11,12 @@
   ],
   "autoload": {
     "psr-4": {
-      "Northrook\\Logger\\": "src/"
+      "Northrook\\": "src/"
     }
   },
   "minimum-stability": "dev",
   "require": {
-    "php": ">=8.1",
-    "psr/log": "^1|^2|^3"
+    "php": ">=8.1"
   },
   "require-dev": {
     "northrook/dev-env": "dev-main"

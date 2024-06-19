@@ -2,7 +2,7 @@
 
 declare ( strict_types = 1 );
 
-namespace Northrook\Logger\Log;
+namespace Northrook\Logger;
 
 use ValueError;
 
@@ -80,14 +80,14 @@ case EMERGENCY = 600;
 	}
 
 	public const NAMES = [
-		100 => 'Debug',
-		200 => 'Info',
-		250 => 'Notice',
-		300 => 'Warning',
-		400 => 'Error',
-		500 => 'Critical',
-		550 => 'Alert',
-		600 => 'Emergency',
+		100 => 'debug',
+		200 => 'info',
+		250 => 'notice',
+		300 => 'warning',
+		400 => 'error',
+		500 => 'critical',
+		550 => 'alert',
+		600 => 'emergency',
 	];
 
 }
