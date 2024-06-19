@@ -4,10 +4,8 @@ declare ( strict_types = 1 );
 
 namespace Northrook\Logger;
 
-use ValueError;
-
 /**
- * PSR-3 compliant {@see LogLevel} Enum.
+ * PSR-3 compliant {@see \Psr\Log\LogLevel} Enum.
  *
  * @author Martin Nielsen <mn@northrook.com>
  */
@@ -69,7 +67,7 @@ case EMERGENCY = 600;
 				return $status;
 			}
 		}
-		throw new ValueError( "$name is not a valid backing value for enum " . Level::class );
+		throw new \ValueError( "{$name} is not a valid backing value for enum " . Level::class );
 	}
 
 	/**

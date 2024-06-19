@@ -5,16 +5,18 @@ declare ( strict_types = 1 );
 namespace Northrook\Logger;
 
 use JetBrains\PhpStorm\Language;
-use Psr\Log as Psr;
+use LogicException;
+use Northrook\Logger;
 use Psr\Log\LoggerInterface;
-use Stringable;
-use Throwable;
+use Stringable, Throwable;
+use function  strstr, strpos, substr, get_debug_type;
+
 
 /**
  *
  * Log events to the {@see Log::$inventory}.
  *
- * - Events are compliant with the {@see Psr\LoggerInterface}.
+ * - Events are compliant with the {@see LoggerInterface}.
  *
  * @author  Martin Nielsen <mn@northrook.com>
  *
@@ -22,15 +24,12 @@ use Throwable;
  */
 final class Log
 {
-    /**
-     * @var LoggerInterface
-     */
-    private static Psr\LoggerInterface $logger;
+    private static LoggerInterface $logger;
 
-    public function __construct( ?Psr\LoggerInterface $logger = null ) {
+    public function __construct( ?LoggerInterface $logger = null ) {
 
         if ( isset( Log::$logger ) ) {
-            throw new \LogicException( Log::class . ' cannot be instantiated more than once.' );
+            throw new LogicException( Log::class . ' cannot be instantiated more than once.' );
         }
 
         Log::$logger = $logger;
@@ -43,6 +42,7 @@ final class Log
      * @param Throwable          $exception
      * @param null|string|Level  $level
      * @param null|string        $message
+     * @param array              $context
      *
      * @return void
      */
@@ -50,7 +50,7 @@ final class Log
         Throwable             $exception,
         null | string | Level $level = null,
         ?string               $message = null,
-        array                 $context = []
+        array                 $context = [],
     ) : void {
 
         $exceptionMessage = $exception->getMessage();
@@ -67,19 +67,19 @@ final class Log
         $level   ??= $exceptionLevel;
         $message ??= $exceptionMessage;
 
-        if ( ! $message ) {
-            $type = get_debug_type( $exception );
-            $line = $exception->getLine();
-            $file = $exception->getFile();
+        if ( !$message ) {
+            $type    = get_debug_type( $exception );
+            $line    = $exception->getLine();
+            $file    = $exception->getFile();
             $message = "$type thrown at line $line in $file. Trace: " . $exception->getTraceAsString();
         }
 
-        $context['exception'] = $exception;
+        $context[ 'exception' ] = $exception;
 
         Log::entry(
             $level,
-            $message,
-            $context
+            trim($message),
+            $context,
         );
     }
 
@@ -252,25 +252,28 @@ final class Log
         string | Stringable $message,
         array               $context = [],
     ) : void {
-        Log::getLogger()->log(
-            Log::getLevel( $level )->name(),
-            $message, $context,
-        );
+        Log::getLogger()->log( Log::getLevel( $level )->name(), $message, $context );
     }
 
-    public static function getLogger() : Psr\LoggerInterface {
-        return Log::$logger ??= new \Northrook\Logger();
+    /**
+     * Return the LoggerInterface instance.
+     *
+     * - If no LoggerInterface has been set, the default {@see Logger} will be used.
+     *
+     * @return LoggerInterface
+     */
+    public static function getLogger() : LoggerInterface {
+        return Log::$logger ??= new Logger();
     }
 
+    /**
+     * Resolve a given {@see \Psr\Log\LogLevel} or string to a valid {@see Level}.
+     *
+     * @param string|Level  $level
+     *
+     * @return Level
+     */
     private static function getLevel( string | Level $level ) : Level {
-        if ( is_string( $level ) ) {
-            if ( false === in_array( $level, Level::NAMES, true ) ) {
-                throw new Psr\InvalidArgumentException( 'Invalid log level.' );
-            }
-
-            return Level::fromName( $level );
-        }
-
-        return $level;
+        return $level instanceof Level ? $level : Level::fromName( $level );
     }
 }
