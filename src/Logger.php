@@ -19,27 +19,52 @@ final class Logger extends AbstractLogger implements Countable
         $this->entries[] = [ $level, $message, $context ];
     }
 
+    /**
+     * Check if there are any log entries.
+     *
+     * @return bool
+     */
     public function hasLogs() : bool {
         return !empty( $this->entries );
     }
 
-    public function clear() : void {
-        $this->entries = [];
-    }
-
-    public function count() : int {
-        return count( $this->entries );
-    }
-
+    /**
+     * Return all log entries.
+     *
+     * @return array[]
+     */
     public function getLogs() : array {
         return $this->entries;
     }
 
+    /**
+     * Return and clear all log entries.
+     *
+     * @return array[]
+     */
     public function cleanLogs() : array {
         $logs          = $this->entries;
         $this->entries = [];
 
         return $logs;
+    }
+
+    /**
+     * Clear all log entries.
+     *
+     * @return void
+     */
+    public function clear() : void {
+        $this->entries = [];
+    }
+
+    /**
+     * Return the number of log entries.
+     *
+     * @return int
+     */
+    public function count() : int {
+        return count( $this->entries );
     }
 
     /**
@@ -64,12 +89,7 @@ final class Logger extends AbstractLogger implements Countable
 
             if ( str_contains( $message, '{' ) && str_contains( $message, '}' ) ) {
                 foreach ( $context as $key => $value ) {
-                    $value   = match ( true ) {
-                        $this->isScalar( $value )   => (string) $value,
-                        $this->isDateTime( $value ) => $value->format( DateTimeInterface::RFC3339 ),
-                        is_object( $value )         => '[object ' . get_debug_type( $value ) . ']',
-                        default                     => '[' . gettype( $value ) . ']',
-                    };
+                    $value   = $this->resolveLogValue( $value );
                     $message = str_replace( "{{$key}}", $value, $message );
                 }
             }
@@ -80,15 +100,16 @@ final class Logger extends AbstractLogger implements Countable
         }
 
         return $logs;
-
     }
 
-    private function isScalar( mixed $value ) : bool {
-        return is_scalar( $value ) || $value instanceof Stringable || is_null( $value );
-    }
-
-    private function isDateTime( mixed $value ) : bool {
-        return $value instanceof DateTimeInterface;
+    private function resolveLogValue( mixed $value ) : string {
+        return match ( true ) {
+            is_scalar( $value ) ||
+            $value instanceof Stringable || is_null( $value ) => (string) $value,
+            $value instanceof DateTimeInterface               => $value->format( DateTimeInterface::RFC3339 ),
+            is_object( $value )                               => '[object ' . get_debug_type( $value ) . ']',
+            default                                           => '[' . gettype( $value ) . ']',
+        };
     }
 
     /**
@@ -113,4 +134,5 @@ final class Logger extends AbstractLogger implements Countable
     public function __wakeup() : void {
         throw new BadMethodCallException( LoggerInterface::class . ' cannot be unserialized' );
     }
+
 }
