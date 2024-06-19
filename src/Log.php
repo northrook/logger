@@ -27,8 +27,19 @@ use Throwable;
  */
 final class Log
 {
+    private static Psr\LoggerInterface $logger;
 
     private static array $inventory = [];
+
+    public function __construct( ?Psr\LoggerInterface $logger = null ) {
+
+        if ( isset( Log::$logger ) ) {
+            throw new \LogicException( Log::class . ' cannot be instantiated more than once.' );
+        }
+
+        Log::$logger = $logger;
+    }
+
 
     /**
      * # `7` Emergency | `600`
