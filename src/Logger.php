@@ -2,14 +2,17 @@
 
 namespace Northrook;
 
-use Psr\Log as Psr;
+use Psr\Log\{AbstractLogger, LoggerInterface, LoggerTrait};
 use Countable, Stringable, BadMethodCallException, DateTimeInterface;
 use function array_map, date, get_debug_type, gettype, is_null, is_object, is_scalar, str_contains, str_replace;
 
-final class Logger extends Psr\AbstractLogger implements Countable
+final class Logger extends AbstractLogger implements Countable
 {
-    use Psr\LoggerTrait;
+    use LoggerTrait;
 
+    /**
+     * @var array<array{string, string, array}>
+     */
     private array $entries = [];
 
     public function log( $level, $message = null, array $context = [] ) : void {
@@ -17,7 +20,7 @@ final class Logger extends Psr\AbstractLogger implements Countable
     }
 
     public function hasLogs() : bool {
-        return ! empty( $this->entries );
+        return !empty( $this->entries );
     }
 
     public function clear() : void {
@@ -101,13 +104,13 @@ final class Logger extends Psr\AbstractLogger implements Countable
      * @return array
      */
     public function __sleep() : array {
-        throw new BadMethodCallException( Psr\LoggerInterface::class . ' cannot be serialized' );
+        throw new BadMethodCallException( LoggerInterface::class . ' cannot be serialized' );
     }
 
     /**
      * LoggerInterfaces cannot be serialized for security reasons.
      */
     public function __wakeup() : void {
-        throw new BadMethodCallException( Psr\LoggerInterface::class . ' cannot be unserialized' );
+        throw new BadMethodCallException( LoggerInterface::class . ' cannot be unserialized' );
     }
 }
