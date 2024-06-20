@@ -109,7 +109,8 @@ The `$context['exception']` will be set to the provided `$$exception`.
 
 When setting a `LoggerInterfacing` using `Log::setLogger()`, you can pass a `bool $precision` argument, setting the static `$enablePrecision` property.
 
->[!The default value is `true`.]
+>[!IMPORTANT]
+> The default value is `true`.
 > It is recommended to set this value according to your environment, as it can be expensive in production. 
 
 When `Log::setLogger()` is first called, a static `int` will be assigned to the `hrtime(true)`. This is used to calculate the `DeltaMs` and `OffsetMs` values.
