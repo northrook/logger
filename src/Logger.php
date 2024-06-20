@@ -3,12 +3,15 @@
 namespace Northrook;
 
 use Psr\Log\{AbstractLogger, LoggerInterface, LoggerTrait};
-use Countable, Stringable, BadMethodCallException, DateTimeInterface;
+use Countable, Stringable, BadMethodCallException, DateTimeInterface, ReflectionClass;
 use function array_map, date, get_debug_type, gettype, is_null, is_object, is_scalar, str_contains, str_replace;
 
 final class Logger extends AbstractLogger implements Countable
 {
     use LoggerTrait;
+
+    public const FORMAT_HUMAN   = 'd-m-Y H:i:s T';
+    public const FORMAT_RFC3339 = 'Y-m-d\TH:i:sP';
 
     /**
      * @var array<array{string, string, array}>
@@ -68,6 +71,61 @@ final class Logger extends AbstractLogger implements Countable
     }
 
     /**
+     * Import the logs from the given {@see LoggerInterface}.
+     *
+     * - Instances of {@see Logger} will be imported natively using {@see Logger::getLogs()}
+     * - Instances of {@see LoggerInterface} will use the Reflection API to import the array from it
+     *
+     * @param LoggerInterface  $logger
+     *
+     * @return void
+     */
+    public function import( LoggerInterface $logger ) : void {
+
+        // If we are given an arbitrary LoggerInterface, try to import the array from it
+        // While it is incredibly unlikely that there will be more than one,
+        // we will try to pick the most likely candidate
+        if ( !$logger instanceof Logger ) {
+
+            $logs            = [];
+            $loggerInterface = new ReflectionClass( $logger );
+
+            foreach ( $loggerInterface->getProperties() as $property ) {
+
+                // Only look at array properties
+                if ( (string) $property->getType() !== 'array' ) {
+                    continue;
+                }
+
+                $value = $property->getValue( $logger );
+
+                // Skip empty arrays, and arrays where the first element is not an array
+                if ( empty( $value ) || !is_array( $value[ 0 ] ) ) {
+                    continue;
+                }
+
+                // Add the potential array to the logs
+                $logs[ $property->getName() ] = $value;
+            }
+
+            // If there is more than one array, remove keys that don't contain 'log'
+            if ( count( $logs ) > 1 ) {
+                $logs = array_filter( $logs, static fn ( $key ) => str_contains( $key, 'log' ), ARRAY_FILTER_USE_KEY );
+            }
+
+            // Pick the first array
+            $importEntries = $logs[ array_key_first( $logs ) ] ?? [];
+        }
+        else {
+            $importEntries = $logger->getLogs();
+        }
+
+        // Merge the arrays
+        $this->entries = array_merge( $this->entries, $importEntries );
+    }
+
+
+    /**
      * Print each log entry into an array, as human-readable strings.
      *
      * - Cleans the log by default.
@@ -78,7 +136,7 @@ final class Logger extends AbstractLogger implements Countable
      *
      * @return array
      */
-    public function printLogs( bool $clean = true, bool $timestamp = false ) : array {
+    public function printLogs( bool $clean = true, bool | string $timestamp = true ) : array {
 
         $entries = $clean ? $this->cleanLogs() : $this->getLogs();
 
@@ -94,7 +152,9 @@ final class Logger extends AbstractLogger implements Countable
                 }
             }
 
-            $time = $timestamp ? '[' . date( DateTimeInterface::RFC3339 ) . '] ' : '';
+            $timestamp = $timestamp === true ? DateTimeInterface::RFC3339 : $timestamp;
+
+            $time = $timestamp ? '[' . date( $timestamp ) . '] ' : '';
 
             $logs[] = "{$time}{$level}: {$message}";
         }

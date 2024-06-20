@@ -5,11 +5,10 @@ declare ( strict_types = 1 );
 namespace Northrook\Logger;
 
 use JetBrains\PhpStorm\Language;
-use LogicException;
 use Northrook\Logger;
 use Psr\Log\LoggerInterface;
 use Stringable, Throwable;
-use function  strstr, strpos, substr, get_debug_type;
+use function strstr, strpos, substr, get_debug_type, hrtime, number_format, strlen, ltrim, str_pad;
 
 
 /**
@@ -26,13 +25,32 @@ final class Log
 {
     private static LoggerInterface $logger;
 
-    public function __construct( ?LoggerInterface $logger = null ) {
+    private static bool $enablePrecision;
+    private static int  $precisionTimestamp;
+    private static ?int $precisionPreviousEntry = null;
 
-        if ( isset( Log::$logger ) ) {
-            throw new LogicException( Log::class . ' cannot be instantiated more than once.' );
+    /**
+     * Set the {@see LoggerInterface} instance.
+     *
+     * @param LoggerInterface  $logger  The {@see LoggerInterface} instance to use
+     * @param bool             $import  [true] Import the array from {@see LoggerInterface} if using the default {@see Logger}
+     *
+     * @return LoggerInterface The current set {@see LoggerInterface} instance
+     */
+    public static function setLogger(
+        LoggerInterface $logger,
+        bool            $enablePrecision = true,
+        bool            $import = true,
+    ) : LoggerInterface {
+
+        Log::$enablePrecision    = $enablePrecision;
+        Log::$precisionTimestamp ??= hrtime( true );
+
+        if ( $import && isset( Log::$logger ) && $logger instanceof Logger ) {
+            $logger->import( Log::$logger );
         }
 
-        Log::$logger = $logger;
+        return Log::$logger = $logger;
     }
 
     /**
@@ -51,6 +69,7 @@ final class Log
         null | string | Level $level = null,
         ?string               $message = null,
         array                 $context = [],
+        ?bool                 $precision = null,
     ) : void {
 
         $exceptionMessage = $exception->getMessage();
@@ -76,11 +95,7 @@ final class Log
 
         $context[ 'exception' ] = $exception;
 
-        Log::entry(
-            $level,
-            trim($message),
-            $context,
-        );
+        Log::entry( $level, $message, $context, $precision );
     }
 
     /**
@@ -96,8 +111,9 @@ final class Log
         #[Language( 'Smarty' )]
         string | Stringable $message,
         array               $context = [],
+        ?bool               $precision = null,
     ) : void {
-        Log::entry( Level::EMERGENCY, $message, $context );
+        Log::entry( Level::EMERGENCY, $message, $context, $precision );
     }
 
     /**
@@ -117,8 +133,9 @@ final class Log
         #[Language( 'Smarty' )]
         string | Stringable $message,
         array               $context = [],
+        ?bool               $precision = null,
     ) : void {
-        Log::entry( Level::ALERT, $message, $context );
+        Log::entry( Level::ALERT, $message, $context, $precision );
     }
 
     /**
@@ -137,8 +154,9 @@ final class Log
         #[Language( 'Smarty' )]
         string | Stringable $message,
         array               $context = [],
+        ?bool               $precision = null,
     ) : void {
-        Log::entry( Level::CRITICAL, $message, $context );
+        Log::entry( Level::CRITICAL, $message, $context, $precision );
     }
 
     /**
@@ -156,8 +174,9 @@ final class Log
         #[Language( 'Smarty' )]
         string | Stringable $message,
         array               $context = [],
+        ?bool               $precision = null,
     ) : void {
-        Log::entry( Level::ERROR, $message, $context );
+        Log::entry( Level::ERROR, $message, $context, $precision );
     }
 
     /**
@@ -177,8 +196,9 @@ final class Log
         #[Language( 'Smarty' )]
         string | Stringable $message,
         array               $context = [],
+        ?bool               $precision = null,
     ) : void {
-        Log::entry( Level::WARNING, $message, $context );
+        Log::entry( Level::WARNING, $message, $context, $precision );
     }
 
     /**
@@ -195,8 +215,9 @@ final class Log
         #[Language( 'Smarty' )]
         string | Stringable $message,
         array               $context = [],
+        ?bool               $precision = null,
     ) : void {
-        Log::entry( Level::NOTICE, $message, $context );
+        Log::entry( Level::NOTICE, $message, $context, $precision );
     }
 
     /**
@@ -215,8 +236,9 @@ final class Log
         #[Language( 'Smarty' )]
         string | Stringable $message,
         array               $context = [],
+        ?bool               $precision = null,
     ) : void {
-        Log::entry( Level::INFO, $message, $context );
+        Log::entry( Level::INFO, $message, $context, $precision );
     }
 
     /**
@@ -233,8 +255,9 @@ final class Log
         #[Language( 'Smarty' )]
         string | Stringable $message,
         array               $context = [],
+        ?bool               $precision = null,
     ) : void {
-        Log::entry( Level::DEBUG, $message, $context );
+        Log::entry( Level::DEBUG, $message, $context, $precision );
     }
 
     /**
@@ -251,8 +274,16 @@ final class Log
         #[Language( 'Smarty' )]
         string | Stringable $message,
         array               $context = [],
+        ?bool               $precision = null,
     ) : void {
-        Log::getLogger()->log( Log::getLevel( $level )->name(), $message, $context );
+        if ( $precision ?? Log::$enablePrecision ) {
+            $context += [ 'precision' => Log::resolvePrecisionDelta() ];
+        }
+        Log::getLogger()->log(
+            Log::getLevel( $level )->name(),
+            trim( $message ),
+            $context,
+        );
     }
 
     /**
@@ -262,8 +293,50 @@ final class Log
      *
      * @return LoggerInterface
      */
-    public static function getLogger() : LoggerInterface {
-        return Log::$logger ??= new Logger();
+    private static function getLogger() : LoggerInterface {
+        return Log::$logger ??= Log::setLogger( new Logger() );
+    }
+
+    private static function formatPrecisionDelta( ?int $hrTime ) : ?string {
+
+        if ( !$hrTime ) {
+            return null;
+        }
+
+        $time = (float) number_format( $hrTime / 1_000_000, strlen( (string) $hrTime ) );
+
+        $decimals = 2;
+
+        // If we have leading zeros
+        if ( $time < 1 ) {
+            $floating = substr( (string) $time, 2 );
+            $decimals += strlen( $floating ) - strlen( ltrim( $floating, '0' ) );
+        }
+
+        $time = number_format( $time, $decimals, '.', '' );
+
+        $time = str_pad( $time, 4, '0' );
+
+
+        return $time ? $time . 'ms' : null;
+    }
+
+    private static function resolvePrecisionDelta() : array {
+
+        // The current hrtime
+        $precisionTime   = hrtime( true );
+        $precisionDelta  = $precisionTime - Log::$precisionTimestamp;
+        $precisionOffset = Log::$precisionPreviousEntry ? $precisionTime - Log::$precisionPreviousEntry : null;
+
+        Log::$precisionPreviousEntry = $precisionTime;
+
+        return [
+            'hrTime'   => $precisionTime, // The current hrtime
+            'hrDelta'  => $precisionDelta,
+            'DeltaMs'  => Log::formatPrecisionDelta( $precisionDelta ),
+            'OffsetMs' => Log::formatPrecisionDelta( $precisionOffset ),
+        ];
+
     }
 
     /**
