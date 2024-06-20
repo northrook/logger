@@ -305,15 +305,16 @@ final class Log
 
         $time = (float) number_format( $hrTime / 1_000_000, strlen( (string) $hrTime ) );
 
-        $decimals = 2;
-
         // If we have leading zeros
-        if ( $time < 1 ) {
-            $floating = substr( (string) $time, 2 );
-            $decimals += strlen( $floating ) - strlen( ltrim( $floating, '0' ) );
-        }
+        // if ( $time < 1 && $decimals === null ) {
+        //     $decimals ??= 2;
+        //     $floating = substr( (string) $time, 2 );
+        //     dump( $floating, strlen( $floating ),strlen( ltrim( $floating, '0' ) ),
+        //           strlen( $floating ) - strlen( ltrim( $floating, '0' ) ));
+        //     $decimals += strlen( $floating ) - strlen( ltrim( $floating, '0' ) );
+        // }
 
-        $time = number_format( $time, $decimals, '.', '' );
+        $time = number_format( $time, 4, '.', '' );
 
         $time = str_pad( $time, 4, '0' );
 
@@ -333,8 +334,8 @@ final class Log
         return [
             'hrTime'   => $precisionTime, // The current hrtime
             'hrDelta'  => $precisionDelta,
-            'DeltaMs'  => Log::formatPrecisionDelta( $precisionDelta ),
-            'OffsetMs' => Log::formatPrecisionDelta( $precisionOffset ),
+            'deltaMs'  => Log::formatPrecisionDelta( $precisionDelta ),
+            'offsetMs' => Log::formatPrecisionDelta( $precisionOffset ),
         ];
 
     }

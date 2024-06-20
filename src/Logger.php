@@ -4,6 +4,7 @@ namespace Northrook;
 
 use Psr\Log\{AbstractLogger, LoggerInterface, LoggerTrait};
 use Countable, Stringable, BadMethodCallException, DateTimeInterface, ReflectionClass;
+use Northrook\Logger\Log;
 use function array_map, date, get_debug_type, gettype, is_null, is_object, is_scalar, str_contains, str_replace;
 
 final class Logger extends AbstractLogger implements Countable
@@ -36,7 +37,17 @@ final class Logger extends AbstractLogger implements Countable
      *
      * @return array[]
      */
-    public function getLogs() : array {
+    public function getLogs( bool $resolve = false ) : array {
+        if ( $resolve === true ) {
+            $logs = [];
+
+            foreach ( $this->entries as $entry ) {
+                $entry[ 1 ] = $this->resolveLogMessage( null, $entry[1], $entry[2], false );
+                $logs[]     = $entry;
+            }
+            return $logs;
+        }
+
         return $this->entries;
     }
 
@@ -45,8 +56,8 @@ final class Logger extends AbstractLogger implements Countable
      *
      * @return array[]
      */
-    public function cleanLogs() : array {
-        $logs          = $this->entries;
+    public function cleanLogs( bool $resolve = false ) : array {
+        $logs          = $this->getLogs( $resolve );
         $this->entries = [];
 
         return $logs;
@@ -143,23 +154,27 @@ final class Logger extends AbstractLogger implements Countable
         $logs = [];
 
         foreach ( $entries as [ $level, $message, $context ] ) {
-            $level = ucfirst( $level );
-
-            if ( str_contains( $message, '{' ) && str_contains( $message, '}' ) ) {
-                foreach ( $context as $key => $value ) {
-                    $value   = $this->resolveLogValue( $value );
-                    $message = str_replace( "{{$key}}", $value, $message );
-                }
-            }
-
-            $timestamp = $timestamp === true ? DateTimeInterface::RFC3339 : $timestamp;
-
-            $time = $timestamp ? '[' . date( $timestamp ) . '] ' : '';
-
-            $logs[] = "{$time}{$level}: {$message}";
+            $logs[] = $this->resolveLogMessage( $level, $message, $context, $timestamp );
         }
 
         return $logs;
+    }
+
+    private function resolveLogMessage( ?string $level, string $message, array $context, $timestamp ) : string {
+
+        $level = $level ?  ucfirst( $level ) . ': ' : null;
+
+        if ( str_contains( $message, '{' ) && str_contains( $message, '}' ) ) {
+            foreach ( $context as $key => $value ) {
+                $value   = $this->resolveLogValue( $value );
+                $message = str_replace( "{{$key}}", $value, $message );
+            }
+        }
+
+        $timestamp = $timestamp === true ? DateTimeInterface::RFC3339 : $timestamp;
+        $time      = $timestamp ? '[' . date( $timestamp ) . '] ' : '';
+
+        return "{$time}{$level}{$message}";
     }
 
     private function resolveLogValue( mixed $value ) : string {

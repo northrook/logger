@@ -4,8 +4,10 @@
 
 The package provides two key classes:
 
-- `Logger`a PSR-3 compliant logger.
-- `Log`, a static accessor to any PSR-3 compliant logger.
+```php
+Northrook\Logger();     // a PSR-3 compliant logger.
+Northrook\Logger\Log(); // a static accessor to any PSR-3 compliant logger. 
+```
 
 The goal of this package is to provide easy logging across your PHP application,
 especially in scenarios where dependency injection may be cumbersome or impractical.
@@ -20,7 +22,7 @@ If you are a stickler for OOP, you can just use the `Logger` class directly.
 
 Install the latest version with composer:
 
-```php
+```bash
 composer require northrook/logger
 ```
 
@@ -54,7 +56,7 @@ Log::setLogger(
 
 If `setLogger` is provided a `Northrook\Logger` instance, it will import any log entries any previous `LoggerInterface`.
 
-If want to just override the current `LoggerInterface` without importing, pass `false` as the second argument:
+If you want to just override the current `LoggerInterface` without importing, pass `false` as the second argument:
 
 ```php
 Log::setLogger( 
