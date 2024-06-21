@@ -2,9 +2,21 @@
 
 namespace Northrook;
 
+use BadMethodCallException;
+use Countable;
+use DateTimeInterface;
 use Psr\Log\{AbstractLogger, LoggerInterface, LoggerTrait};
-use Countable, Stringable, BadMethodCallException, DateTimeInterface, ReflectionClass;
-use function array_map, date, get_debug_type, gettype, is_null, is_object, is_scalar, str_contains, str_replace;
+use ReflectionClass;
+use Stringable;
+use function array_map;
+use function date;
+use function get_debug_type;
+use function gettype;
+use function is_null;
+use function is_object;
+use function is_scalar;
+use function str_contains;
+use function str_replace;
 
 final class Logger extends AbstractLogger implements Countable
 {

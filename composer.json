@@ -11,7 +11,7 @@
   ],
   "autoload": {
     "psr-4": {
-      "Northrook\\": "src/"
+      "Northrook\\": ""
     }
   },
   "minimum-stability": "dev",

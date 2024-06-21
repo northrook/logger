@@ -7,8 +7,16 @@ namespace Northrook\Logger;
 use JetBrains\PhpStorm\Language;
 use Northrook\Logger;
 use Psr\Log\LoggerInterface;
-use Stringable, Throwable;
-use function strstr, strpos, substr, get_debug_type, hrtime, number_format, strlen, ltrim, str_pad;
+use Stringable;
+use Throwable;
+use function get_debug_type;
+use function hrtime;
+use function number_format;
+use function str_pad;
+use function strlen;
+use function strpos;
+use function strstr;
+use function substr;
 
 
 /**

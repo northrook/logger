@@ -46,7 +46,6 @@ You can manually assign a `LoggerInterface` using `Log::setLogger()`:
 
 ```php
 use Northrook\Logger\Log;
-use Psr\Log\LoggerInterface;
 
 Log::setLogger( 
     logger: new Logger(), // LoggerInterface
