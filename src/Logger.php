@@ -4,7 +4,6 @@ namespace Northrook;
 
 use Psr\Log\{AbstractLogger, LoggerInterface, LoggerTrait};
 use Countable, Stringable, BadMethodCallException, DateTimeInterface, ReflectionClass;
-use Northrook\Logger\Log;
 use function array_map, date, get_debug_type, gettype, is_null, is_object, is_scalar, str_contains, str_replace;
 
 final class Logger extends AbstractLogger implements Countable
@@ -18,6 +17,12 @@ final class Logger extends AbstractLogger implements Countable
      * @var array<array{string, string, array}>
      */
     private array $entries = [];
+
+    public function __construct( ?LoggerInterface $import = null ) {
+        if ( $import ) {
+            $this->import( $import );
+        }
+    }
 
     public function log( $level, $message = null, array $context = [] ) : void {
         $this->entries[] = [ $level, $message, $context ];
@@ -42,7 +47,7 @@ final class Logger extends AbstractLogger implements Countable
             $logs = [];
 
             foreach ( $this->entries as $entry ) {
-                $entry[ 1 ] = $this->resolveLogMessage( null, $entry[1], $entry[2], false );
+                $entry[ 1 ] = $this->resolveLogMessage( null, $entry[ 1 ], $entry[ 2 ], false );
                 $logs[]     = $entry;
             }
             return $logs;
@@ -93,14 +98,21 @@ final class Logger extends AbstractLogger implements Countable
      */
     public function import( LoggerInterface $logger ) : void {
 
-        // If we are given an arbitrary LoggerInterface, try to import the array from it
-        // While it is incredibly unlikely that there will be more than one,
-        // we will try to pick the most likely candidate
-        if ( !$logger instanceof Logger ) {
+        // If the given LoggerInterface has a cleanLogs() method, use that
+        if ( method_exists( $logger, 'cleanLogs' ) ) {
+            $importEntries = $logger->cleanLogs();
+        }
+        // Otherwise, use Reflection to import the array
+        else {
 
             $logs            = [];
             $loggerInterface = new ReflectionClass( $logger );
 
+            /*
+               While it is incredibly unlikely that there will be more
+               than one property containing the logs, we will still
+               ensure that we pick the most likely candidate.
+            */
             foreach ( $loggerInterface->getProperties() as $property ) {
 
                 // Only look at array properties
@@ -119,16 +131,13 @@ final class Logger extends AbstractLogger implements Countable
                 $logs[ $property->getName() ] = $value;
             }
 
-            // If there is more than one array, remove keys that don't contain 'log'
+            // If there is more than one candidate, remove keys that don't contain 'log'
             if ( count( $logs ) > 1 ) {
                 $logs = array_filter( $logs, static fn ( $key ) => str_contains( $key, 'log' ), ARRAY_FILTER_USE_KEY );
             }
 
             // Pick the first array
             $importEntries = $logs[ array_key_first( $logs ) ] ?? [];
-        }
-        else {
-            $importEntries = $logger->getLogs();
         }
 
         // Merge the arrays
@@ -147,7 +156,7 @@ final class Logger extends AbstractLogger implements Countable
      *
      * @return array
      */
-    public function printLogs( bool $clean = true, bool | string $timestamp = true ) : array {
+    public function printLogs( bool $clean = true, bool | string $timestamp = false ) : array {
 
         $entries = $clean ? $this->cleanLogs() : $this->getLogs();
 
@@ -162,7 +171,7 @@ final class Logger extends AbstractLogger implements Countable
 
     private function resolveLogMessage( ?string $level, string $message, array $context, $timestamp ) : string {
 
-        $level = $level ?  ucfirst( $level ) . ': ' : null;
+        $level = $level ? ucfirst( $level ) . ': ' : null;
 
         if ( str_contains( $message, '{' ) && str_contains( $message, '}' ) ) {
             foreach ( $context as $key => $value ) {

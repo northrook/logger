@@ -277,7 +277,7 @@ final class Log
         ?bool               $precision = null,
     ) : void {
         if ( $precision ?? Log::$enablePrecision ) {
-            $context += [ 'precision' => Log::resolvePrecisionDelta() ];
+            $context +=  Log::resolvePrecisionDelta();
         }
         Log::getLogger()->log(
             Log::getLevel( $level )->name(),
@@ -332,10 +332,10 @@ final class Log
         Log::$precisionPreviousEntry = $precisionTime;
 
         return [
-            'hrTime'   => $precisionTime, // The current hrtime
-            'hrDelta'  => $precisionDelta,
-            'deltaMs'  => Log::formatPrecisionDelta( $precisionDelta ),
-            'offsetMs' => Log::formatPrecisionDelta( $precisionOffset ),
+            'precision.hrTime'   => $precisionTime, // The current hrtime
+            'precision.hrDelta'  => $precisionDelta,
+            'precision.deltaMs'  => Log::formatPrecisionDelta( $precisionDelta ),
+            'precision.offsetMs' => Log::formatPrecisionDelta( $precisionOffset ),
         ];
 
     }
