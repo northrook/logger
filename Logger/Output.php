@@ -12,11 +12,12 @@ final class Output
 {
     private const STYLESHEET = <<<CSS
         pre.log-dump {
+            --padding: 8px;
             display: grid;
             grid-template-areas: "level timestamp message"; /* 3 columns */
             grid-template-columns: max-content max-content 1fr; /* 2 sizes */
-            padding: 8px;
-            gap: 5px 1ch;
+            padding: 0 var(--padding);
+            column-gap: 1ch;
             
             color: #fefefe;
             background-color: #15191e80;
@@ -31,6 +32,12 @@ final class Output
         pre.log-dump div.log-entry {
             display: contents;
         }
+        
+        body pre.log-dump div[class*="log-column-"] {
+            position: relative;
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
 
         body pre.log-dump .log-column-timer {
             user-select: none;
@@ -41,11 +48,21 @@ final class Output
             overflow: hidden;
             padding-left: 1.25ch;
         }
+        
+        
+        body pre.log-dump .log-column-timer.has-offset:hover {
+            cursor: progress;
+        }
 
         body pre.log-dump .log-column-timer.has-offset > span {
             display: inline-block;
             transition: opacity 100ms ease-in-out, transform 150ms ease-in-out;
-            cursor: progress;
+            transition-delay: 50ms;
+        }
+        
+        
+        body pre.log-dump .log-column-timer.has-offset:hover > span {
+            transition-delay: 0ms;
         }
 
         body pre.log-dump .log-column-timer > span.log-precision-delta {
@@ -69,7 +86,7 @@ final class Output
             left: 0;
             color: lightgreen;
             opacity: .25;
-            transition: opacity 100ms ease-in-out;
+            transition: opacity 100ms ease-in-out ;
         }
 
         body pre.log-dump .log-column-timer.has-offset:hover::before {
@@ -86,15 +103,21 @@ final class Output
             transform: translateY( 0 );
         }
 
-        body pre.log-dump .log-column-level{
+        body pre.log-dump .log-column-level {
             user-select: none;
             width: fit-content;
             height: fit-content;
         }
 
-        body pre.log-dump .log-level{
-            border-radius: .125em;
-            padding:.25ch;
+        body pre.log-dump .log-entry:nth-child(even) .log-column-level::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: calc(var(--padding) * -1);
+            right: calc( var(--padding) + 100vw * -1 );
+            background-color: #15191e60;
+            z-index: -5;
         }
 
         body pre.log-dump .log-level.info {
@@ -127,6 +150,14 @@ final class Output
             background-color: #e12f2f;
         }
 
+        body pre.log-dump .log-level.emergency {
+            color: #ff0000;
+        }
+
+        body pre.log-dump .log-column-message  {
+            position: relative;
+        }
+        
         body pre.log-dump .log-column-message.emergency::before {
             content: "";
             position: absolute;
@@ -137,13 +168,6 @@ final class Output
             z-index: -1;
         }
 
-        body pre.log-dump .log-level.emergency {
-            color: #ff0000;
-        }
-
-        body pre.log-dump .log-column-message  {
-            position: relative;
-        }
     CSS;
 
     public readonly array $log;
