@@ -29,11 +29,11 @@ use function substr;
  *
  * @link    https://github.com/northrook/logger
  */
-final class Log
+class Log
 {
     private static LoggerInterface $logger;
 
-    private static bool $enablePrecision;
+    private static bool $enablePrecision        = false;
     private static int  $precisionTimestamp;
     private static ?int $precisionPreviousEntry = null;
 
@@ -285,7 +285,7 @@ final class Log
         ?bool               $precision = null,
     ) : void {
         if ( $precision ?? Log::$enablePrecision ) {
-            $context +=  Log::resolvePrecisionDelta();
+            $context += Log::resolvePrecisionDelta();
         }
         Log::getLogger()->log(
             Log::getLevel( $level )->name(),
