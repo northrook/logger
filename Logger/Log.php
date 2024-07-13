@@ -83,11 +83,11 @@ class Log
         $exceptionMessage = $exception->getMessage();
         $exceptionLevel   = strstr( $exceptionMessage, ':', true );
 
-        if ( $exceptionLevel ) {
+        try {
             $exceptionLevel   = Level::fromName( $exceptionLevel );
             $exceptionMessage = substr( $exceptionMessage, strpos( $exceptionMessage, ':' ) + 1 );
         }
-        else {
+        catch ( Throwable ) {
             $exceptionLevel = Level::ERROR;
         }
 
