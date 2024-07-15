@@ -69,6 +69,7 @@ class Log
      * @param null|string|Level  $level
      * @param null|string        $message
      * @param array              $context
+     * @param null|bool          $precision
      *
      * @return void
      */
@@ -106,12 +107,13 @@ class Log
         Log::entry( $level, $message, $context, $precision );
     }
 
-    /**
+     /**
      * # `7` Emergency | `600`
      * System is unusable.
      *
      * @param string|Stringable  $message
      * @param array              $context
+     * @param null|bool          $precision
      *
      * @return void
      */
@@ -134,6 +136,7 @@ class Log
      *
      * @param string|Stringable  $message
      * @param array              $context
+     * @param null|bool          $precision
      *
      * @return void
      */
@@ -155,6 +158,7 @@ class Log
      *
      * @param string|Stringable  $message
      * @param array              $context
+     * @param null|bool          $precision
      *
      * @return void
      */
@@ -175,6 +179,7 @@ class Log
      *
      * @param string|Stringable  $message
      * @param array              $context
+     * @param null|bool          $precision
      *
      * @return void
      */
@@ -197,6 +202,7 @@ class Log
      *
      * @param string|Stringable  $message
      * @param array              $context
+     * @param null|bool          $precision
      *
      * @return void
      */
@@ -216,6 +222,7 @@ class Log
      *
      * @param string|Stringable  $message
      * @param array              $context
+     * @param null|bool          $precision
      *
      * @return void
      */
@@ -237,6 +244,7 @@ class Log
      *
      * @param string|Stringable  $message
      * @param array              $context
+     * @param null|bool          $precision
      *
      * @return void
      */
@@ -256,6 +264,7 @@ class Log
      *
      * @param string|Stringable  $message
      * @param array              $context
+     * @param null|bool          $precision
      *
      * @return void
      */
@@ -274,6 +283,7 @@ class Log
      * @param string | Level     $level  = [ 'emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info', 'debug' ][$any]
      * @param string|Stringable  $message
      * @param array              $context
+     * @param null|bool          $precision
      *
      * @return void
      */
