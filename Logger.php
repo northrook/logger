@@ -211,6 +211,7 @@ final class Logger extends AbstractLogger implements Countable
 
     private function resolveLogValue( mixed $value ) : string {
         return match ( true ) {
+            is_bool( $value )                                 => \json_encode( $value ),
             is_scalar( $value ) ||
             $value instanceof Stringable || is_null( $value ) => (string) $value,
             $value instanceof DateTimeInterface               => $value->format( DateTimeInterface::RFC3339 ),
