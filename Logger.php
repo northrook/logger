@@ -61,7 +61,7 @@ final class Logger extends AbstractLogger implements Countable
             $logs = [];
 
             foreach ( $this->entries as $entry ) {
-                $entry[ 1 ] = $this->resolveLogMessage( null, $entry[ 1 ], $entry[ 2 ], false );
+                $entry[ 1 ] = $this->resolveLogMessage( null, $entry[ 1 ], $entry[ 2 ], false, $highlightContext );
                 $logs[]     = $entry;
             }
             return $logs;
