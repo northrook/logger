@@ -119,6 +119,23 @@ final class Output
             background-color: #15191e60;
             z-index: -5;
         }
+        
+        body pre.log-dump .highlight {
+            color: #52dfff;
+        }
+        
+        body pre.log-dump .highlight-success {
+            color: #45d5bd;
+        }
+        
+        body pre.log-dump .highlight-warning {
+            color: #d69045;
+        }
+        
+        body pre.log-dump .highlight-danger {
+            color: #d55645;
+        }
+
 
         body pre.log-dump .log-level.info {
             color: #2fe02f;
@@ -176,8 +193,9 @@ final class Output
         LoggerInterface $logger,
         bool            $clear = true,
     ) {
-        $this->log = ( new Logger( import : $logger ) )->cleanLogs( $clear );
+        $this->log = ( new Logger( import : $logger ) )->cleanLogs( $clear, true );
     }
+
 
     public static function __callStatic( string $name, array $arguments ) {
         if ( $name === 'dump' ) {
@@ -204,12 +222,12 @@ final class Output
                 <div class="log-entry">
                     <div class="log-column-level">$level</div>
                     <div class="log-column-timer$hasOffset">$delta$offset</div>
-                    <div class="log-column-message {$log[ 0 ]}">$message</div>
+                    <div class="log-column-message {$log[0]}">$message</div>
                 </div>
                 HTML;
         }
 
-        $timestamp =date( 'Y-m-d H:i:s' );
+        $timestamp = date( 'Y-m-d H:i:s' );
 
         echo '<style>' . Output::STYLESHEET . '</style>';
         echo '<pre class="log-dump" data-timestamp="' . $timestamp . '">' . implode( "\n", $output ) . '</pre>';

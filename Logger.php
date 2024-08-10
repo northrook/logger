@@ -56,7 +56,7 @@ final class Logger extends AbstractLogger implements Countable
      *
      * @return array[]
      */
-    public function getLogs( bool $resolve = false ) : array {
+    public function getLogs( bool $resolve = false, bool $highlightContext = false ) : array {
         if ( $resolve === true ) {
             $logs = [];
 
@@ -75,8 +75,8 @@ final class Logger extends AbstractLogger implements Countable
      *
      * @return array[]
      */
-    public function cleanLogs( bool $resolve = false ) : array {
-        $logs          = $this->getLogs( $resolve );
+    public function cleanLogs( bool $resolve = false, bool $highlightContext = false ) : array {
+        $logs          = $this->getLogs( $resolve, $highlightContext );
         $this->entries = [];
 
         return $logs;
@@ -183,13 +183,22 @@ final class Logger extends AbstractLogger implements Countable
         return $logs;
     }
 
-    private function resolveLogMessage( ?string $level, string $message, array $context, $timestamp ) : string {
+    private function resolveLogMessage(
+        ?string $level,
+        string  $message,
+        array   $context,
+        mixed   $timestamp,
+        bool    $highlight = false,
+    ) : string {
 
         $level = $level ? ucfirst( $level ) . ': ' : null;
 
         if ( str_contains( $message, '{' ) && str_contains( $message, '}' ) ) {
             foreach ( $context as $key => $value ) {
-                $value   = $this->resolveLogValue( $value );
+                $value = $this->resolveLogValue( $value );
+                if ( $highlight ) {
+                    $value = $this->highlight( $value );
+                }
                 $message = str_replace( "{{$key}}", $value, $message );
             }
         }
@@ -208,6 +217,30 @@ final class Logger extends AbstractLogger implements Countable
             is_object( $value )                               => '[object ' . get_debug_type( $value ) . ']',
             default                                           => '[' . gettype( $value ) . ']',
         };
+    }
+
+    private function highlight( string $string ) : string {
+
+        if ( \str_contains( $string, '::' ) ) {
+            $string = \str_replace( '::', '<span style="color: #fefefe">::</span>', $string );
+        }
+
+        $match = \strtolower( $string );
+        if ( $match === 'true' ) {
+            return '<b class="highlight-success">' . $string . '</b>';
+        }
+        if ( $match === 'false' ) {
+            return '<b class="highlight-danger">' . $string . '</b>';
+        }
+        if ( $match === 'null' ) {
+            return '<b class="highlight-warning">' . $string . '</b>';
+        }
+
+        if ( \strlen( $string ) < 12 || \is_numeric( $string ) ) {
+            return '<b class="highlight">' . $string . '</b>';
+        }
+
+        return '<span class="highlight">' . $string . '</span>';
     }
 
     /**
