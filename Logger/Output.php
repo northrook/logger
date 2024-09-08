@@ -7,6 +7,7 @@ namespace Northrook\Logger;
 use Northrook\Logger;
 use Psr\Log\LoggerInterface;
 
+
 /**
  * @method static self dump( LoggerInterface $logger )
  */
@@ -36,6 +37,7 @@ final class Output
         }
         
         body pre.log-dump div[class*="log-column-"] {
+            white-space: normal;
             position: relative;
             padding-top: 5px;
             padding-bottom: 5px;
@@ -44,11 +46,12 @@ final class Output
         body pre.log-dump .log-column-timer {
             user-select: none;
             position: relative;
-            display: block;
-            width: fit-content;
+            display: flex;
+            justify-content: flex-end;
+            width: 100%;
             height: fit-content;
             overflow: hidden;
-            padding-left: 1.25ch;
+            padding-left: 1.125ch;
         }
         
         
@@ -69,6 +72,7 @@ final class Output
 
         body pre.log-dump .log-column-timer > span.log-precision-delta {
             position: relative;
+            right: .5rem;
             opacity: 1;
             transform: translateY( 0 );
             color: #bfacac;
@@ -76,7 +80,7 @@ final class Output
 
         body pre.log-dump .log-column-timer > span.log-precision-offset {
             position: absolute;
-            left: 1.25ch;
+            right: .5rem;
             opacity: 0;
             transform: translateY( -100% );
             color: #a2b3ef;
@@ -108,7 +112,7 @@ final class Output
         body pre.log-dump .log-column-level {
             user-select: none;
             width: fit-content;
-            height: fit-content;
+            height: calc(100% - 10px);
         }
 
         body pre.log-dump .log-entry:nth-child(even) .log-column-level::before {
@@ -118,11 +122,12 @@ final class Output
             bottom: 0;
             left: calc(var(--padding) * -1);
             right: calc( var(--padding) + 100vw * -1 );
-            background-color: #15191e60;
+            background-color: #15191e50;
             z-index: -5;
         }
         
         body pre.log-dump .highlight {
+        display: inline-block;
             color: #52dfff;
         }
         
@@ -194,22 +199,22 @@ final class Output
     private function __construct(
         LoggerInterface $logger,
         bool            $clear = true,
-    ) {
+    )
+    {
         $this->log = ( new Logger( import : $logger ) )->cleanLogs( $clear, true );
     }
 
-
-    public static function __callStatic( string $name, array $arguments ) {
+    public static function __callStatic( string $name, array $arguments )
+    {
         if ( $name === 'dump' ) {
             ( new Output( ...$arguments ) )->output();
         }
     }
 
-    private function output() : void {
-
+    private function output() : void
+    {
         $output = [];
         foreach ( $this->log as $log ) {
-
             $level = "<span class=\"log-level {$log[ 0 ]}\">" . $log[ 0 ] . "</span>";
 
             $delta     = $log[ 2 ][ 'precision.deltaMs' ] ?? null;
@@ -218,7 +223,7 @@ final class Output
             $offset    = $offset ? '<span class="log-precision-offset">' . $offset . '</span>' : null;
             $hasOffset = $offset ? ' has-offset' : null;
 
-            $message = '<span class="log-message">' . $log[ 1 ] . '</span>';
+            $message = '<span class="log-message">' .  $log[ 1 ] . '</span>';
 
             $output[] = <<<HTML
                 <div class="log-entry">
@@ -234,6 +239,5 @@ final class Output
         echo '<style>' . Output::STYLESHEET . '</style>';
         echo '<pre class="log-dump" data-timestamp="' . $timestamp . '">' . implode( "\n", $output ) . '</pre>';
     }
-
 
 }
