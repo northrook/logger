@@ -224,7 +224,8 @@ final class Output
         $output = [];
 
         foreach ( $this->log as $log ) {
-            $level = "<span class=\"log-level {$log['level']}\">".$log['level'].'</span>';
+
+            $level = \strtolower( $log['level'] );
 
             $delta     = $log['context']['precision.deltaMs']  ?? null;
             $offset    = $log['context']['precision.offsetMs'] ?? null;
@@ -236,9 +237,9 @@ final class Output
 
             $output[] = <<<HTML
                 <div class="log-entry">
-                    <div class="log-column-level">{$level}</div>
+                    <div class="log-column-level"><span class="log-level {$level}">{$level}</span></div>
                     <div class="log-column-timer{$hasOffset}">{$delta}{$offset}</div>
-                    <div class="log-column-message {$log['level']}">{$message}</div>
+                    <div class="log-column-message {$level}">{$message}</div>
                 </div>
                 HTML;
         }
