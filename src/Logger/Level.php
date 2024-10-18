@@ -1,8 +1,10 @@
 <?php
 
-declare ( strict_types = 1 );
+declare(strict_types=1);
 
 namespace Northrook\Logger;
+
+use ValueError;
 
 /**
  * PSR-3 compliant {@see \Psr\Log\LogLevel} Enum.
@@ -12,24 +14,24 @@ namespace Northrook\Logger;
 enum Level : int
 {
     /**
-     * Detailed debug information
+     * Detailed debug information.
      */
     case DEBUG = 100;
 
     /**
-     * Interesting events
+     * Interesting events.
      *
      * Examples: User logs in, SQL logs.
      */
     case INFO = 200;
 
     /**
-     * Uncommon events
+     * Uncommon events.
      */
     case NOTICE = 250;
 
     /**
-     * Exceptional occurrences that are not errors
+     * Exceptional occurrences that are not errors.
      *
      * Examples: Use of deprecated APIs, poor use of an API,
      * undesirable things that are not necessarily wrong.
@@ -37,19 +39,19 @@ enum Level : int
     case WARNING = 300;
 
     /**
-     * Runtime errors
+     * Runtime errors.
      */
     case ERROR = 400;
 
     /**
-     * Critical conditions
+     * Critical conditions.
      *
      * Example: Application component unavailable, unexpected exception.
      */
     case CRITICAL = 500;
 
     /**
-     * Action must be taken immediately
+     * Action must be taken immediately.
      *
      * Example: Entire website down, database unavailable, etc.
      * This should trigger the SMS alerts and wake you up.
@@ -61,7 +63,8 @@ enum Level : int
      */
     case EMERGENCY = 600;
 
-    public const NAMES = [
+    /** @var array<int, string> */
+    public const array NAMES = [
         100 => 'debug',
         200 => 'info',
         250 => 'notice',
@@ -72,21 +75,22 @@ enum Level : int
         600 => 'emergency',
     ];
 
-    public static function fromName( string $name ) : self {
+    public static function fromName( string $name ) : self
+    {
 
         foreach ( Level::cases() as $status ) {
             if ( \strtoupper( $name ) === $status->name ) {
                 return $status;
             }
         }
-        throw new \ValueError( "{$name} is not a valid backing value for enum " . Level::class );
+        throw new ValueError( "{$name} is not a valid backing value for enum ".Level::class );
     }
 
     /**
      * @return string
      */
-    public function name() : string {
-        return Level::NAMES[ $this->value ];
+    public function name() : string
+    {
+        return Level::NAMES[$this->value];
     }
-
 }

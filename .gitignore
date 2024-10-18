@@ -1,20 +1,20 @@
-# PHPStorm
+### Editor
+/.ide/
 /.idea/
-
-# VSCodeish
 *.code-workspace
 
-# Composer
-/vendor/
-/composer.phar
-
-# Build data
-.env
-*.lock
-/public/
-/var/
+### Dev
+/vendor
+/node_modules
+/*.cache
+/*.lock
+/*.css
 /index.php
-
-# Node
-/node_modules/
 package-lock.json
+
+### Symfony
+/config/secrets/prod/prod.decrypt.private.php
+/var
+/public/cache
+/public/build
+.env

@@ -1,16 +1,16 @@
 <?php
 
-declare ( strict_types = 1 );
+declare(strict_types=1);
 
 namespace Northrook\Logger;
 
 use JetBrains\PhpStorm\Language;
 use Northrook\Logger;
 use Psr\Log\LoggerInterface;
-
+use Stringable;
+use Throwable;
 
 /**
- *
  * Log events to the {@see Log::$inventory}.
  *
  * - Events are compliant with the {@see LoggerInterface}.
@@ -23,15 +23,18 @@ final class Log
 {
     private static LoggerInterface $logger;
 
-    private static bool $enablePrecision        = false;
-    private static int  $precisionTimestamp;
+    private static bool $enablePrecision = false;
+
+    private static int $precisionTimestamp;
+
     private static ?int $precisionPreviousEntry = null;
 
     /**
      * Set the {@see LoggerInterface} instance.
      *
-     * @param LoggerInterface  $logger  The {@see LoggerInterface} instance to use
-     * @param bool             $import  [true] Import the array from {@see LoggerInterface} if using the default {@see Logger}
+     * @param LoggerInterface $logger          The {@see LoggerInterface} instance to use
+     * @param bool            $import          [true] Import the array from {@see LoggerInterface} if using the default {@see Logger}
+     * @param bool            $enablePrecision
      *
      * @return LoggerInterface The current set {@see LoggerInterface} instance
      */
@@ -41,7 +44,7 @@ final class Log
         bool            $import = true,
     ) : LoggerInterface {
 
-        Log::$enablePrecision    = $enablePrecision;
+        Log::$enablePrecision = $enablePrecision;
         Log::$precisionTimestamp ??= \hrtime( true );
 
         if ( $import && isset( Log::$logger ) && $logger instanceof Logger ) {
@@ -55,44 +58,44 @@ final class Log
      * # `E` Exception
      * System has experienced an error.
      *
-     * @param \Throwable          $exception
-     * @param null|string|Level  $level
-     * @param null|string        $message
-     * @param array              $context
-     * @param null|bool          $precision
+     * @param Throwable               $exception
+     * @param null|Level|string       $level
+     * @param null|string             $message
+     * @param array<array-key, mixed> $context
+     * @param null|bool               $precision
      *
      * @return void
      */
     public static function exception(
-        \Throwable            $exception,
-        null | string | Level $level = null,
-        ?string               $message = null,
-        array                 $context = [],
-        ?bool                 $precision = null,
+        Throwable         $exception,
+        null|string|Level $level = null,
+        ?string           $message = null,
+        array             $context = [],
+        ?bool             $precision = null,
     ) : void {
 
         $exceptionMessage = $exception->getMessage();
         $exceptionLevel   = \strstr( $exceptionMessage, ':', true );
 
         try {
-            $exceptionLevel   = Level::fromName( $exceptionLevel );
+            $exceptionLevel   = Level::fromName( $exceptionLevel ?: 'error' );
             $exceptionMessage = \substr( $exceptionMessage, \strpos( $exceptionMessage, ':' ) + 1 );
         }
-        catch ( \Throwable ) {
+        catch ( Throwable ) {
             $exceptionLevel = Level::ERROR;
         }
 
         $level   ??= $exceptionLevel;
         $message ??= $exceptionMessage;
 
-        if ( !$message ) {
+        if ( ! $message ) {
             $type    = \get_debug_type( $exception );
             $line    = $exception->getLine();
             $file    = $exception->getFile();
-            $message = "$type thrown at line $line in $file. Trace: " . $exception->getTraceAsString();
+            $message = "{$type} thrown at line {$line} in {$file}. Trace: ".$exception->getTraceAsString();
         }
 
-        $context[ 'exception' ] = $exception;
+        $context['exception'] = $exception;
 
         Log::entry( $level, $message, $context, $precision );
     }
@@ -101,168 +104,160 @@ final class Log
      * # `7` Emergency | `600`
      * System is unusable.
      *
-     * @param string|\Stringable  $message
-     * @param array               $context
-     * @param null|bool           $precision
+     * @param string|Stringable       $message
+     * @param array<array-key, mixed> $context
+     * @param null|bool               $precision
      *
      * @return void
      */
     public static function emergency(
-        #[Language( 'Smarty' )]
-        string | \Stringable $message,
-        array                $context = [],
-        ?bool                $precision = null,
+        #[Language( 'Smarty' )] string|Stringable $message,
+        array             $context = [],
+        ?bool             $precision = null,
     ) : void {
         Log::entry( Level::EMERGENCY, $message, $context, $precision );
     }
 
     /**
-     * # `6` Alert | `550`
+     * # `6` Alert | `550`.
      *
      * Action must be taken immediately.
      *
      * Example: Entire website down, database unavailable, etc. This should
      * trigger the SMS alerts and wake you up.
      *
-     * @param string|\Stringable  $message
-     * @param array               $context
-     * @param null|bool           $precision
+     * @param string|Stringable       $message
+     * @param array<array-key, mixed> $context
+     * @param null|bool               $precision
      *
      * @return void
      */
     public static function alert(
-        #[Language( 'Smarty' )]
-        string | \Stringable $message,
-        array                $context = [],
-        ?bool                $precision = null,
+        #[Language( 'Smarty' )] string|Stringable $message,
+        array             $context = [],
+        ?bool             $precision = null,
     ) : void {
         Log::entry( Level::ALERT, $message, $context, $precision );
     }
 
     /**
-     * # `5` Critical | `500`
+     * # `5` Critical | `500`.
      *
      * Critical conditions.
      *
      * Example: Application component unavailable, unexpected exception.
      *
-     * @param string|\Stringable  $message
-     * @param array               $context
-     * @param null|bool           $precision
+     * @param string|Stringable       $message
+     * @param array<array-key, mixed> $context
+     * @param null|bool               $precision
      *
      * @return void
      */
     public static function critical(
-        #[Language( 'Smarty' )]
-        string | \Stringable $message,
-        array                $context = [],
-        ?bool                $precision = null,
+        #[Language( 'Smarty' )] string|Stringable $message,
+        array             $context = [],
+        ?bool             $precision = null,
     ) : void {
         Log::entry( Level::CRITICAL, $message, $context, $precision );
     }
 
     /**
-     * # `4` Error | `400`
+     * # `4` Error | `400`.
      *
      * Runtime errors that do not require immediate action but should typically
      * be logged and monitored.
      *
-     * @param string|\Stringable  $message
-     * @param array               $context
-     * @param null|bool           $precision
+     * @param string|Stringable       $message
+     * @param array<array-key, mixed> $context
+     * @param null|bool               $precision
      *
      * @return void
      */
     public static function error(
-        #[Language( 'Smarty' )]
-        string | \Stringable $message,
-        array                $context = [],
-        ?bool                $precision = null,
+        #[Language( 'Smarty' )] string|Stringable $message,
+        array             $context = [],
+        ?bool             $precision = null,
     ) : void {
         Log::entry( Level::ERROR, $message, $context, $precision );
     }
 
     /**
-     * # `3` Warning | `300`
+     * # `3` Warning | `300`.
      *
      * Exceptional occurrences that are not errors.
      *
      * Example: Use of deprecated APIs, poor use of an API, undesirable things
      * that are not necessarily wrong.
      *
-     * @param string|\Stringable  $message
-     * @param array               $context
-     * @param null|bool           $precision
+     * @param string|Stringable       $message
+     * @param array<array-key, mixed> $context
+     * @param null|bool               $precision
      *
      * @return void
      */
     public static function warning(
-        #[Language( 'Smarty' )]
-        string | \Stringable $message,
-        array                $context = [],
-        ?bool                $precision = null,
+        #[Language( 'Smarty' )] string|Stringable $message,
+        array             $context = [],
+        ?bool             $precision = null,
     ) : void {
         Log::entry( Level::WARNING, $message, $context, $precision );
     }
 
     /**
-     * # `2` Notice | `250`
+     * # `2` Notice | `250`.
      *
      * Normal but significant events.
      *
-     * @param string|\Stringable  $message
-     * @param array               $context
-     * @param null|bool           $precision
+     * @param string|Stringable       $message
+     * @param array<array-key, mixed> $context
+     * @param null|bool               $precision
      *
      * @return void
      */
     public static function notice(
-        #[Language( 'Smarty' )]
-        string | \Stringable $message,
-        array                $context = [],
-        ?bool                $precision = null,
+        #[Language( 'Smarty' )] string|Stringable $message,
+        array             $context = [],
+        ?bool             $precision = null,
     ) : void {
         Log::entry( Level::NOTICE, $message, $context, $precision );
     }
 
     /**
-     * # `1` Info | `200`
+     * # `1` Info | `200`.
      *
      * Interesting events.
      *
      * Example: User logs in, SQL logs.
      *
-     * @param string|\Stringable  $message
-     * @param array               $context
-     * @param null|bool           $precision
+     * @param string|Stringable       $message
+     * @param array<array-key, mixed> $context
+     * @param null|bool               $precision
      *
      * @return void
      */
     public static function info(
-        #[Language( 'Smarty' )]
-        string | \Stringable $message,
-        array                $context = [],
-        ?bool                $precision = null,
+        #[Language( 'Smarty' )] string|Stringable $message,
+        array             $context = [],
+        ?bool             $precision = null,
     ) : void {
         Log::entry( Level::INFO, $message, $context, $precision );
     }
 
     /**
-     * # `0` Debug | `100`
+     * # `0` Debug | `100`.
      *
      * Detailed debug information.
      *
-     * @param string|\Stringable  $message
-     * @param array               $context
-     * @param null|bool           $precision
+     * @param string|Stringable       $message
+     * @param array<array-key, mixed> $context
+     * @param null|bool               $precision
      *
      * @return void
      */
     public static function debug(
-        #[Language( 'Smarty' )]
-        string | \Stringable $message,
-        array                $context = [],
-        ?bool                $precision = null,
+        #[Language( 'Smarty' )] string|Stringable $message,
+        array             $context = [],
+        ?bool             $precision = null,
     ) : void {
         Log::entry( Level::DEBUG, $message, $context, $precision );
     }
@@ -270,26 +265,25 @@ final class Log
     /**
      * Logs with an arbitrary level.
      *
-     * @param string | Level      $level  = [ 'emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info', 'debug' ][$any]
-     * @param string|\Stringable  $message
-     * @param array               $context
-     * @param null|bool           $precision
+     * @param Level|string            $level     = [ 'emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info', 'debug' ][$any]
+     * @param string|Stringable       $message
+     * @param array<array-key, mixed> $context
+     * @param null|bool               $precision
      *
      * @return void
      */
     public static function entry(
-        string | Level       $level,
-        #[Language( 'Smarty' )]
-        string | \Stringable $message,
-        array                $context = [],
-        ?bool                $precision = null,
+        string|Level      $level,
+        #[Language( 'Smarty' )] string|Stringable $message,
+        array             $context = [],
+        ?bool             $precision = null,
     ) : void {
         if ( $precision ?? Log::$enablePrecision ) {
             $context += Log::resolvePrecisionDelta();
         }
         Log::getLogger()->log(
             Log::getLevel( $level )->name(),
-            \trim( $message ),
+            \trim( (string) $message ),
             $context,
         );
     }
@@ -297,17 +291,19 @@ final class Log
     /**
      * Return the LoggerInterface instance.
      *
-     * - If no LoggerInterface has been set, the default {@see \Northrook\Logger} will be used.
+     * - If no LoggerInterface has been set, the default {@see Logger} will be used.
      *
      * @return LoggerInterface
      */
-    private static function getLogger() : LoggerInterface {
+    private static function getLogger() : LoggerInterface
+    {
         return Log::$logger ??= Log::setLogger( new Logger() );
     }
 
-    private static function formatPrecisionDelta( ?int $hrTime ) : ?string {
+    private static function formatPrecisionDelta( null|int|float $hrTime ) : ?string
+    {
 
-        if ( !$hrTime ) {
+        if ( ! $hrTime ) {
             return null;
         }
 
@@ -326,15 +322,18 @@ final class Log
 
         $time = \str_pad( $time, 4, '0' );
 
-
-        return $time ? $time . 'ms' : null;
+        return $time ? $time.'ms' : null;
     }
 
-    private static function resolvePrecisionDelta() : array {
+    /**
+     * @return array{"precision.hrTime": mixed, "precision.hrDelta": mixed, "precision.deltaMs": null|string, "precision.offsetMs": null|string}
+     */
+    private static function resolvePrecisionDelta() : array
+    {
 
         // The current hrtime
         $precisionTime   = \hrtime( true );
-        $precisionDelta  = $precisionTime - Log::$precisionTimestamp;
+        $precisionDelta  = $precisionTime                                - Log::$precisionTimestamp;
         $precisionOffset = Log::$precisionPreviousEntry ? $precisionTime - Log::$precisionPreviousEntry : null;
 
         Log::$precisionPreviousEntry = $precisionTime;
@@ -351,11 +350,12 @@ final class Log
     /**
      * Resolve a given {@see \Psr\Log\LogLevel} or string to a valid {@see Level}.
      *
-     * @param string|Level  $level
+     * @param Level|string $level
      *
      * @return Level
      */
-    private static function getLevel( string | Level $level ) : Level {
+    private static function getLevel( string|Level $level ) : Level
+    {
         return $level instanceof Level ? $level : Level::fromName( $level );
     }
 }
