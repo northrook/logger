@@ -39,9 +39,9 @@ final class Log
      * @return LoggerInterface The current set {@see LoggerInterface} instance
      */
     public static function setLogger(
-        LoggerInterface $logger,
-        bool            $enablePrecision = true,
-        bool            $import = true,
+            LoggerInterface $logger,
+            bool            $enablePrecision = true,
+            bool            $import = true,
     ) : LoggerInterface {
 
         Log::$enablePrecision = $enablePrecision;
@@ -67,19 +67,22 @@ final class Log
      * @return void
      */
     public static function exception(
-        Throwable         $exception,
-        null|string|Level $level = null,
-        ?string           $message = null,
-        array             $context = [],
-        ?bool             $precision = null,
+            Throwable         $exception,
+            null|string|Level $level = null,
+            ?string           $message = null,
+            array             $context = [],
+            ?bool             $precision = null,
     ) : void {
 
         $exceptionMessage = $exception->getMessage();
         $exceptionLevel   = \strstr( $exceptionMessage, ':', true );
 
-        try {
-            $exceptionLevel   = Level::fromName( $exceptionLevel ?: 'error' );
+        if ( $exceptionLevel !== false ) {
             $exceptionMessage = \substr( $exceptionMessage, \strpos( $exceptionMessage, ':' ) + 1 );
+        }
+
+        try {
+            $exceptionLevel   = Level::fromName( $exceptionLevel );
         }
         catch ( Throwable ) {
             $exceptionLevel = Level::ERROR;
@@ -111,9 +114,9 @@ final class Log
      * @return void
      */
     public static function emergency(
-        #[Language( 'Smarty' )] string|Stringable $message,
-        array             $context = [],
-        ?bool             $precision = null,
+            #[Language( 'Smarty' )] string|Stringable $message,
+            array             $context = [],
+            ?bool             $precision = null,
     ) : void {
         Log::entry( Level::EMERGENCY, $message, $context, $precision );
     }
@@ -133,9 +136,9 @@ final class Log
      * @return void
      */
     public static function alert(
-        #[Language( 'Smarty' )] string|Stringable $message,
-        array             $context = [],
-        ?bool             $precision = null,
+            #[Language( 'Smarty' )] string|Stringable $message,
+            array             $context = [],
+            ?bool             $precision = null,
     ) : void {
         Log::entry( Level::ALERT, $message, $context, $precision );
     }
@@ -154,9 +157,9 @@ final class Log
      * @return void
      */
     public static function critical(
-        #[Language( 'Smarty' )] string|Stringable $message,
-        array             $context = [],
-        ?bool             $precision = null,
+            #[Language( 'Smarty' )] string|Stringable $message,
+            array             $context = [],
+            ?bool             $precision = null,
     ) : void {
         Log::entry( Level::CRITICAL, $message, $context, $precision );
     }
@@ -174,9 +177,9 @@ final class Log
      * @return void
      */
     public static function error(
-        #[Language( 'Smarty' )] string|Stringable $message,
-        array             $context = [],
-        ?bool             $precision = null,
+            #[Language( 'Smarty' )] string|Stringable $message,
+            array             $context = [],
+            ?bool             $precision = null,
     ) : void {
         Log::entry( Level::ERROR, $message, $context, $precision );
     }
@@ -196,9 +199,9 @@ final class Log
      * @return void
      */
     public static function warning(
-        #[Language( 'Smarty' )] string|Stringable $message,
-        array             $context = [],
-        ?bool             $precision = null,
+            #[Language( 'Smarty' )] string|Stringable $message,
+            array             $context = [],
+            ?bool             $precision = null,
     ) : void {
         Log::entry( Level::WARNING, $message, $context, $precision );
     }
@@ -215,9 +218,9 @@ final class Log
      * @return void
      */
     public static function notice(
-        #[Language( 'Smarty' )] string|Stringable $message,
-        array             $context = [],
-        ?bool             $precision = null,
+            #[Language( 'Smarty' )] string|Stringable $message,
+            array             $context = [],
+            ?bool             $precision = null,
     ) : void {
         Log::entry( Level::NOTICE, $message, $context, $precision );
     }
@@ -236,9 +239,9 @@ final class Log
      * @return void
      */
     public static function info(
-        #[Language( 'Smarty' )] string|Stringable $message,
-        array             $context = [],
-        ?bool             $precision = null,
+            #[Language( 'Smarty' )] string|Stringable $message,
+            array             $context = [],
+            ?bool             $precision = null,
     ) : void {
         Log::entry( Level::INFO, $message, $context, $precision );
     }
@@ -255,9 +258,9 @@ final class Log
      * @return void
      */
     public static function debug(
-        #[Language( 'Smarty' )] string|Stringable $message,
-        array             $context = [],
-        ?bool             $precision = null,
+            #[Language( 'Smarty' )] string|Stringable $message,
+            array             $context = [],
+            ?bool             $precision = null,
     ) : void {
         Log::entry( Level::DEBUG, $message, $context, $precision );
     }
@@ -273,18 +276,18 @@ final class Log
      * @return void
      */
     public static function entry(
-        string|Level      $level,
-        #[Language( 'Smarty' )] string|Stringable $message,
-        array             $context = [],
-        ?bool             $precision = null,
+            string|Level      $level,
+            #[Language( 'Smarty' )] string|Stringable $message,
+            array             $context = [],
+            ?bool             $precision = null,
     ) : void {
         if ( $precision ?? Log::$enablePrecision ) {
             $context += Log::resolvePrecisionDelta();
         }
         Log::getLogger()->log(
-            Log::getLevel( $level )->name(),
-            \trim( (string) $message ),
-            $context,
+                Log::getLevel( $level )->name(),
+                \trim( (string) $message ),
+                $context,
         );
     }
 
@@ -339,10 +342,10 @@ final class Log
         Log::$precisionPreviousEntry = $precisionTime;
 
         return [
-            'precision.hrTime'   => $precisionTime, // The current hrtime
-            'precision.hrDelta'  => $precisionDelta,
-            'precision.deltaMs'  => Log::formatPrecisionDelta( $precisionDelta ),
-            'precision.offsetMs' => Log::formatPrecisionDelta( $precisionOffset ),
+                'precision.hrTime'   => $precisionTime, // The current hrtime
+                'precision.hrDelta'  => $precisionDelta,
+                'precision.deltaMs'  => Log::formatPrecisionDelta( $precisionDelta ),
+                'precision.offsetMs' => Log::formatPrecisionDelta( $precisionOffset ),
         ];
 
     }
