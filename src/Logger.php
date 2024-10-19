@@ -207,8 +207,8 @@ final class Logger extends AbstractLogger implements Countable
 
         $logs = [];
 
-        foreach ( $entries as [$level, $message, $context] ) {
-            $logs[] = $this->resolveLogMessage( $level, $message, $context, $timestamp );
+        foreach ( $entries as $entry ) {
+            $logs[] = $this->resolveLogMessage( null, $entry['message'], $entry['context'], $timestamp );
         }
 
         return $logs;
