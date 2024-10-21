@@ -245,10 +245,16 @@ final class Logger extends AbstractLogger implements Countable
             $inline = Str::extractNamedGroups( '#(?<tag>{.+?})#', $message );
 
             foreach ( $inline as $tag ) {
+
+                if ( ! $tag['tag'] || ! $tag['match'] ) {
+                    continue;
+                }
+
                 $value = $this->resolveLogValue( \trim( $tag['tag'], '{}' ) );
                 if ( $highlight ) {
                     $value = $this->highlight( $value );
                 }
+
                 $message = \str_replace( $tag['match'], $value, $message );
             }
         }

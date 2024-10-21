@@ -10,7 +10,7 @@ use Psr\Log\LoggerInterface;
 /**
  * @phpstan-type  Entry array{level:string, message:string, context: array<array-key, mixed>}
  * @phpstan-type  Entries  array<int, Entry>
- * /
+ *
  * @method static self dump( LoggerInterface $logger )
  */
 final class Output
