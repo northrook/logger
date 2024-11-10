@@ -43,7 +43,6 @@ final class Log
         bool            $enablePrecision = true,
         bool            $import = true,
     ) : LoggerInterface {
-
         Log::$enablePrecision = $enablePrecision;
         Log::$precisionTimestamp ??= \hrtime( true );
 
@@ -69,11 +68,10 @@ final class Log
     public static function exception(
         Throwable         $exception,
         null|string|Level $level = null,
-        ?string           $message = null,
+        #[Language( 'Smarty' )] ?string           $message = null,
         array             $context = [],
         ?bool             $precision = null,
     ) : void {
-
         $exceptionMessage = $exception->getMessage();
         $exceptionLevel   = \strstr( $exceptionMessage, ':', true );
 
@@ -305,7 +303,6 @@ final class Log
 
     private static function formatPrecisionDelta( null|int|float $hrTime ) : ?string
     {
-
         if ( ! $hrTime ) {
             return null;
         }
@@ -333,7 +330,6 @@ final class Log
      */
     private static function resolvePrecisionDelta() : array
     {
-
         // The current hrtime
         $precisionTime   = \hrtime( true );
         $precisionDelta  = $precisionTime                                - Log::$precisionTimestamp;
@@ -347,7 +343,6 @@ final class Log
             'precision.deltaMs'  => Log::formatPrecisionDelta( $precisionDelta ),
             'precision.offsetMs' => Log::formatPrecisionDelta( $precisionOffset ),
         ];
-
     }
 
     /**
