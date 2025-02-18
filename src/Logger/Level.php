@@ -77,7 +77,6 @@ enum Level : int
 
     public static function fromName( string $name ) : self
     {
-
         foreach ( Level::cases() as $status ) {
             if ( \strtoupper( $name ) === $status->name ) {
                 return $status;

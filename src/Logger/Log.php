@@ -7,8 +7,7 @@ namespace Northrook\Logger;
 use JetBrains\PhpStorm\Language;
 use Northrook\Logger;
 use Psr\Log\LoggerInterface;
-use Stringable;
-use Throwable;
+use Stringable, Throwable;
 
 /**
  * Log events to the {@see Log::$inventory}.
@@ -68,14 +67,15 @@ final class Log
     public static function exception(
         Throwable         $exception,
         null|string|Level $level = null,
-        #[Language( 'Smarty' )] ?string           $message = null,
+        #[Language( 'Smarty' )]
+        ?string           $message = null,
         array             $context = [],
         ?bool             $precision = null,
     ) : void {
         $exceptionMessage = $exception->getMessage();
         $exceptionLevel   = \strstr( $exceptionMessage, ':', true );
 
-        if ( false !== $exceptionLevel ) {
+        if ( $exceptionLevel !== false ) {
             $exceptionMessage = \substr( $exceptionMessage, \strpos( $exceptionMessage, ':' ) + 1 );
         }
 
@@ -112,7 +112,8 @@ final class Log
      * @return void
      */
     public static function emergency(
-        #[Language( 'Smarty' )] string|Stringable $message,
+        #[Language( 'Smarty' )]
+        string|Stringable $message,
         array             $context = [],
         ?bool             $precision = null,
     ) : void {
@@ -134,7 +135,8 @@ final class Log
      * @return void
      */
     public static function alert(
-        #[Language( 'Smarty' )] string|Stringable $message,
+        #[Language( 'Smarty' )]
+        string|Stringable $message,
         array             $context = [],
         ?bool             $precision = null,
     ) : void {
@@ -155,7 +157,8 @@ final class Log
      * @return void
      */
     public static function critical(
-        #[Language( 'Smarty' )] string|Stringable $message,
+        #[Language( 'Smarty' )]
+        string|Stringable $message,
         array             $context = [],
         ?bool             $precision = null,
     ) : void {
@@ -175,7 +178,8 @@ final class Log
      * @return void
      */
     public static function error(
-        #[Language( 'Smarty' )] string|Stringable $message,
+        #[Language( 'Smarty' )]
+        string|Stringable $message,
         array             $context = [],
         ?bool             $precision = null,
     ) : void {
@@ -197,7 +201,8 @@ final class Log
      * @return void
      */
     public static function warning(
-        #[Language( 'Smarty' )] string|Stringable $message,
+        #[Language( 'Smarty' )]
+        string|Stringable $message,
         array             $context = [],
         ?bool             $precision = null,
     ) : void {
@@ -216,7 +221,8 @@ final class Log
      * @return void
      */
     public static function notice(
-        #[Language( 'Smarty' )] string|Stringable $message,
+        #[Language( 'Smarty' )]
+        string|Stringable $message,
         array             $context = [],
         ?bool             $precision = null,
     ) : void {
@@ -237,7 +243,8 @@ final class Log
      * @return void
      */
     public static function info(
-        #[Language( 'Smarty' )] string|Stringable $message,
+        #[Language( 'Smarty' )]
+        string|Stringable $message,
         array             $context = [],
         ?bool             $precision = null,
     ) : void {
@@ -256,7 +263,8 @@ final class Log
      * @return void
      */
     public static function debug(
-        #[Language( 'Smarty' )] string|Stringable $message,
+        #[Language( 'Smarty' )]
+        string|Stringable $message,
         array             $context = [],
         ?bool             $precision = null,
     ) : void {
@@ -275,7 +283,8 @@ final class Log
      */
     public static function entry(
         string|Level      $level,
-        #[Language( 'Smarty' )] string|Stringable $message,
+        #[Language( 'Smarty' )]
+        string|Stringable $message,
         array             $context = [],
         ?bool             $precision = null,
     ) : void {

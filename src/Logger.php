@@ -5,14 +5,9 @@ declare(strict_types=1);
 namespace Northrook;
 
 use BadMethodCallException;
-use Countable;
-use DateTimeInterface;
 use Psr\Log\{AbstractLogger, LoggerInterface, LoggerTrait};
 use Northrook\Logger\Level;
-use ReflectionClass;
-use Stringable;
-use Support\Str;
-use InvalidArgumentException;
+use Stringable, Countable, ReflectionClass, InvalidArgumentException, DateTimeInterface;
 
 /**
  * @phpstan-type  Entry array{level:string, message:string, context: array<array-key, mixed>}
@@ -78,13 +73,19 @@ final class Logger extends AbstractLogger implements Countable
      */
     public function getLogs( bool $resolve = false, bool $highlightContext = false ) : array
     {
-        if ( true === $resolve ) {
+        if ( $resolve === true ) {
             /** @var Entries $logs */
             $logs = [];
 
             foreach ( $this->entries as $entry ) {
-                $entry['message'] = $this->resolveLogMessage( null, $entry['message'], $entry['context'], false, $highlightContext );
-                $logs[]           = $entry;
+                $entry['message'] = $this->resolveLogMessage(
+                    null,
+                    $entry['message'],
+                    $entry['context'],
+                    false,
+                    $highlightContext,
+                );
+                $logs[] = $entry;
             }
             return $logs;
         }
@@ -140,14 +141,12 @@ final class Logger extends AbstractLogger implements Countable
      */
     public function import( LoggerInterface $logger ) : void
     {
-
         // If the given LoggerInterface has a cleanLogs() method, use that
         if ( \method_exists( $logger, 'cleanLogs' ) ) {
             $importEntries = $logger->cleanLogs();
         }
         // Otherwise, use Reflection to import the array
         else {
-
             $logs            = [];
             $loggerInterface = new ReflectionClass( $logger );
 
@@ -157,7 +156,6 @@ final class Logger extends AbstractLogger implements Countable
                ensure that we pick the most likely candidate.
              */
             foreach ( $loggerInterface->getProperties() as $property ) {
-
                 // Only look at array properties
                 if ( (string) $property->getType() !== 'array' ) {
                     continue;
@@ -202,7 +200,6 @@ final class Logger extends AbstractLogger implements Countable
      */
     public function printLogs( bool $clean = true, bool|string $timestamp = false ) : array
     {
-
         $entries = $clean ? $this->cleanLogs() : $this->getLogs();
 
         $logs = [];
@@ -230,7 +227,6 @@ final class Logger extends AbstractLogger implements Countable
         bool|string $timestamp,
         bool        $highlight = false,
     ) : string {
-
         $level = $level ? \ucfirst( $level ).': ' : null;
 
         if ( \str_contains( $message, '{' ) && \str_contains( $message, '}' ) ) {
@@ -242,10 +238,21 @@ final class Logger extends AbstractLogger implements Countable
                 $message = \str_replace( "{{$key}}", $value, $message );
             }
 
-            $inline = Str::extractNamedGroups( '#(?<tag>{.+?})#', $message );
+            \preg_match_all( '#(?<tag>{.+?})#', $message, $inline, PREG_SET_ORDER | PREG_UNMATCHED_AS_NULL );
+
+            foreach ( $inline as $index => $match ) {
+                $getNamed = static fn( $value, $key ) => \is_string( $key ) ? $value : false;
+                $named    = \array_filter( $match, $getNamed, ARRAY_FILTER_USE_BOTH );
+
+                if ( $named ) {
+                    $inline[$index] = ['match' => \array_shift( $match ), ...$named];
+                }
+                else {
+                    unset( $inline[$index] );
+                }
+            }
 
             foreach ( $inline as $tag ) {
-
                 if ( ! $tag['tag'] || ! $tag['match'] ) {
                     continue;
                 }
@@ -259,7 +266,7 @@ final class Logger extends AbstractLogger implements Countable
             }
         }
 
-        $timestamp = true === $timestamp ? DateTimeInterface::RFC3339 : $timestamp ;
+        $timestamp = $timestamp === true ? DateTimeInterface::RFC3339 : $timestamp;
         $time      = $timestamp ? '['.\date( $timestamp ).'] ' : '';
 
         return "{$time}{$level}{$message}";
@@ -279,19 +286,18 @@ final class Logger extends AbstractLogger implements Countable
 
     private function highlight( string $string ) : string
     {
-
         if ( \str_contains( $string, '::' ) ) {
             $string = \str_replace( '::', '<span style="color: #fefefe">::</span>', $string );
         }
 
         $match = \strtolower( $string );
-        if ( 'true' === $match ) {
+        if ( $match === 'true' ) {
             return '<b class="highlight-success">'.$string.'</b>';
         }
-        if ( 'false' === $match ) {
+        if ( $match === 'false' ) {
             return '<b class="highlight-danger">'.$string.'</b>';
         }
-        if ( 'null' === $match ) {
+        if ( $match === 'null' ) {
             return '<b class="highlight-warning">'.$string.'</b>';
         }
 
