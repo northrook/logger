@@ -6,12 +6,12 @@ namespace Northrook\Logger;
 
 use Northrook\Logger;
 use Psr\Log\LoggerInterface;
+use function Support\is_stringable;
+use const Support\AUTO;
 
 /**
  * @phpstan-type  Entry array{level:string, message:string, context: array<array-key, mixed>}
  * @phpstan-type  Entries  array<int, Entry>
- *
- * @method static self dump( LoggerInterface $logger )
  */
 final class Output
 {
@@ -129,7 +129,6 @@ final class Output
         }
                              
         body pre.log-dump .highlight {
-        display: inline-block;
             color: #52dfff;
         }
                              
@@ -198,6 +197,22 @@ final class Output
     /** @var Entries */
     public readonly array $log;
 
+    public ?bool $expanded = AUTO;
+
+    protected string $background = '#1c1e26';
+
+    protected string $highlight = '#52dfff';
+
+    protected string $highlight_success = '#45d5bd';
+
+    protected string $highlight_notice = '#2fa5e0';
+
+    protected string $highlight_info = '#654657';
+
+    protected string $highlight_warning = '#d69045';
+
+    protected string $highlight_danger = '#d55645';
+
     private function __construct(
         LoggerInterface $logger,
         bool            $clear = true,
@@ -205,17 +220,123 @@ final class Output
         $this->log = ( new Logger( import : $logger ) )->cleanLogs( $clear, true );
     }
 
-    /**
-     * @param string                    $name
-     * @param array<0, LoggerInterface> $arguments
-     *
-     * @return void
-     */
-    public static function __callStatic( string $name, array $arguments )
+    public static function table( LoggerInterface $logger, bool $clear = true ) : self
     {
-        if ( $name === 'dump' ) {
-            ( new Output( ...$arguments ) )->output();
+        return new self( $logger, $clear );
+    }
+
+    private function getLogEntries() : string
+    {
+        $output = [];
+
+        foreach ( $this->log as $i => $log ) {
+            $level = \strtolower( $log['level'] );
+
+            $delta  = $log['context']['precision.deltaMs']  ?? null;
+            $offset = $log['context']['precision.offsetMs'] ?? null;
+            \assert( is_stringable( $delta ) && is_stringable( $offset ) );
+            $delta     = $delta ? ( '<span class="log-precision-delta">'.$delta.'</span>' ) : null;
+            $offset    = $offset ? ( '<span class="log-precision-offset">'.$offset.'</span>' ) : null;
+            $hasOffset = $offset ? ' has-offset' : null;
+
+            $message = "<span class=\"log-message{$hasOffset}\">{$log['message']}</span>";
+
+            $logEntry = \implode(
+                '; ',
+                [
+                ],
+            );
+
+            $isEven = $i % 2 === 0;
+
+            if ( $isEven ) {
+                $logEntry .= '; background-color: #15191e15';
+            }
+
+            $levelColor = match ( $level ) {
+                'info'    => $this->highlight_info,
+                'notice'  => $this->highlight_notice,
+                'warning' => $this->highlight_warning,
+                'error'   => $this->highlight_danger,
+                default   => $this->highlight,
+            };
+
+            $logLevel = \implode(
+                '; ',
+                [
+                    'padding: 1px 8px 0 5px',
+                    'white-space: nowrap',
+                    'width: 1px',
+                    "color: {$levelColor}",
+                    'vertical-align: top;',
+                ],
+            );
+
+            $logTimer = \implode(
+                '; ',
+                [],
+            );
+
+            $logMessage = \implode(
+                '; ',
+                [
+                    'width: auto',
+                ],
+            );
+
+            $output[] = <<<HTML
+                <tr style="{$logEntry}" data-level="{$level}">
+                  <td style="{$logLevel}">{$level}</td>
+                  <td style="{$logTimer}">{$delta}{$offset}</td>
+                  <td style="{$logMessage}">{$message}</td>
+                </tr>
+                HTML;
         }
+
+        return \implode( PHP_EOL, $output );
+    }
+
+    public function print() : void
+    {
+        $container = \implode(
+            '; ',
+            [
+                'overflow-x: hidden',
+                'overflow-y: clip',
+                "background-color: {$this->background}25",
+                'max-height: 50vh',
+                'font-family: \'Dev Workstation\', monospace !important',
+            ],
+        );
+        $table = \implode(
+            '; ',
+            [
+                'width: 100%',
+                'table-layout: auto',
+                'border-collapse: collapse',
+                'font-size: 14px',
+                'line-height: 18px',
+            ],
+        );
+
+        $this->expanded ??= true; // auto-expand if warning or greater
+
+        $open = $this->expanded ? 'open' : '';
+        echo <<<HTML
+            <details {$open} style="{$container}">
+                <summary style="padding: 3px 5px; font-size: 12px; cursor: pointer; opacity: .5; transition: opacity 200ms ease-in-out;"
+                        onMouseOver="this.style.opacity='1'"
+                        onMouseOut="this.style.opacity='.5'" >Logs</summary>
+                <table style="{$table}">
+                  <tbody>{$this->getLogEntries()}</tbody>
+                </table>
+            </details>  
+            HTML;
+    }
+
+    public static function dump( LoggerInterface $logger, bool $clear = true ) : void
+    {
+        ( new Output( $logger, $clear ) )->output();
     }
 
     private function output() : void
@@ -225,8 +346,11 @@ final class Output
         foreach ( $this->log as $log ) {
             $level = \strtolower( $log['level'] );
 
-            $delta     = $log['context']['precision.deltaMs']  ?? null;
-            $offset    = $log['context']['precision.offsetMs'] ?? null;
+            $delta  = $log['context']['precision.deltaMs']  ?? null;
+            $offset = $log['context']['precision.offsetMs'] ?? null;
+
+            \assert( is_stringable( $delta ) && is_stringable( $offset ) );
+
             $delta     = $delta ? '<span class="log-precision-delta">'.$delta.'</span>' : null;
             $offset    = $offset ? '<span class="log-precision-offset">'.$offset.'</span>' : null;
             $hasOffset = $offset ? ' has-offset' : null;

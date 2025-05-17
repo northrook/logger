@@ -165,7 +165,7 @@ final class Logger extends AbstractLogger implements Countable
 
                 \assert( \is_array( $value ) && ! empty( $value ) );
 
-                // Skip empty arrays, and arrays where the first element is not an array
+                // Skip empty arrays and arrays where the first element is not an array
                 if ( ! \is_array( $value[0] ) ) {
                     continue;
                 }
