@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Northrook;
 
-use BadMethodCallException;
 use Psr\Log\{AbstractLogger, LoggerInterface, LoggerTrait};
 use Northrook\Logger\Level;
 use Stringable, Countable, ReflectionClass, InvalidArgumentException, DateTimeInterface;
@@ -319,20 +318,12 @@ final class Logger extends AbstractLogger implements Countable
     }
 
     /**
-     * LoggerInterfaces cannot be serialized for security reasons.
+     * Serialized empty security reasons.
      *
      * @return array
      */
     public function __sleep() : array
     {
-        throw new BadMethodCallException( LoggerInterface::class.' cannot be serialized' );
-    }
-
-    /**
-     * LoggerInterfaces cannot be serialized for security reasons.
-     */
-    public function __wakeup() : void
-    {
-        throw new BadMethodCallException( LoggerInterface::class.' cannot be unserialized' );
+        return [];
     }
 }
