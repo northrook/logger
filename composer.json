@@ -11,7 +11,7 @@
   ],
   "autoload": {
     "psr-4": {
-      "Northrook\\": "src"
+      "Core\\": "src"
     }
   },
   "minimum-stability": "dev",
@@ -21,7 +21,10 @@
     "psr/log": "^3.0"
   },
   "require-dev": {
-    "northrook/dev": "dev-main"
+    "jetbrains/phpstorm-attributes": "@stable",
+    "phpstan/phpstan": " @stable",
+    "northrook/php-cs": "dev-main",
+    "symfony/error-handler": "^7.3"
   },
   "scripts": {
     "phpstan": "vendor/bin/phpstan analyse"

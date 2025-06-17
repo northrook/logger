@@ -2,54 +2,58 @@
 
 declare(strict_types=1);
 
-namespace Northrook;
+namespace Core;
 
-use Psr\Log\{AbstractLogger, LoggerInterface, LoggerTrait};
-use Northrook\Logger\Level;
-use Stringable, Countable, ReflectionClass, InvalidArgumentException, DateTimeInterface;
+use Psr\Log\{LoggerInterface};
+use Core\Logger\{
+    LoggerMethods,
+    Level,
+    Log,
+};
+use Countable;
+use Stringable;
+use ReflectionClass;
+use JetBrains\PhpStorm\Language;
 
-/**
- * @phpstan-type  Entry array{level:string, message:string, context: array<array-key, mixed>}
- * @phpstan-type  Entries  array<int, Entry>
- */
-final class Logger extends AbstractLogger implements Countable
+final class Logger implements LoggerInterface, Countable
 {
-    use LoggerTrait;
+    use LoggerMethods;
 
     public const string FORMAT_HUMAN = 'd-m-Y H:i:s T';
 
     public const string FORMAT_RFC3339 = 'Y-m-d\TH:i:sP';
 
-    /** @var Entries */
+    /** @var Log[] */
     private array $entries = [];
 
-    public function __construct( ?LoggerInterface $import = null )
-    {
+    public function __construct(
+        private readonly bool $precision = false,
+        ?LoggerInterface      $import = null,
+    ) {
         if ( $import ) {
             $this->import( $import );
         }
     }
 
     /**
-     * @param mixed                    $level
+     * @param int|Level|string         $level
      * @param null|string|Stringable   $message
      * @param array<array-key, string> $context
      *
      * @return void
      */
-    public function log( mixed $level, null|string|Stringable $message = null, array $context = [] ) : void
-    {
-        $level = match ( true ) {
-            \is_numeric( $level ) => Level::from( (int) $level ),
-            \is_string( $level )  => Level::fromName( $level ),
-            default               => throw new InvalidArgumentException( 'Invalid log level.' ),
-        };
-
-        $this->entries[] = [
-            'level'   => $level->name,
-            'message' => (string) $message,
-            'context' => $context,
-        ];
+    public function log(
+        mixed                  $level,
+        #[Language( 'Smarty' )]
+        null|string|Stringable $message = null,
+        array                  $context = [],
+    ) : void {
+        $this->entries[] = new Log(
+            $level,
+            $message,
+            $context,
+            $this->precision ? \microtime( true ) : \time(),
+        );
     }
 
     /**
@@ -66,25 +70,21 @@ final class Logger extends AbstractLogger implements Countable
      * Return all {@see Logger::$entries}.
      *
      * @param bool $resolve
-     * @param bool $highlightContext
+     * @param bool $highlight
+     * @param bool $promoteBrackets
      *
-     * @return Entries
+     * @return ($resolve is true ? string[] : Log[])
      */
-    public function getLogs( bool $resolve = false, bool $highlightContext = false ) : array
-    {
+    public function getLogs(
+        bool $resolve = false,
+        bool $highlight = false,
+        bool $promoteBrackets = false,
+    ) : array {
         if ( $resolve === true ) {
-            /** @var Entries $logs */
             $logs = [];
 
             foreach ( $this->entries as $entry ) {
-                $entry['message'] = $this->resolveLogMessage(
-                    null,
-                    $entry['message'],
-                    $entry['context'],
-                    false,
-                    $highlightContext,
-                );
-                $logs[] = $entry;
+                $logs[] = $entry->resolve( $highlight, $promoteBrackets );
             }
             return $logs;
         }
@@ -96,13 +96,13 @@ final class Logger extends AbstractLogger implements Countable
      * Return and clear all log entries.
      *
      * @param bool $resolve
-     * @param bool $highlightContext
+     * @param bool $highlight
      *
-     * @return Entries
+     * @return ($resolve is true ? string[] : Log[])
      */
-    public function cleanLogs( bool $resolve = false, bool $highlightContext = false ) : array
+    public function cleanLogs( bool $resolve = false, bool $highlight = false ) : array
     {
-        $logs          = $this->getLogs( $resolve, $highlightContext );
+        $logs          = $this->getLogs( $resolve, $highlight );
         $this->entries = [];
 
         return $logs;
@@ -182,8 +182,9 @@ final class Logger extends AbstractLogger implements Countable
             $importEntries = $logs[\array_key_first( $logs )] ?? [];
         }
 
-        // Merge the arrays
-        $this->entries = \array_merge( $this->entries, $importEntries );
+        foreach ( $importEntries as $entry ) {
+            $this->entries[] = new Log( ...$entry );
+        }
     }
 
     /**
@@ -193,118 +194,12 @@ final class Logger extends AbstractLogger implements Countable
      * - Does not include Timestamp by default.
      *
      * @param bool $clean
-     * @param bool $timestamp
      *
      * @return string[]
      */
-    public function printLogs( bool $clean = true, bool|string $timestamp = false ) : array
+    public function printLogs( bool $clean = true ) : array
     {
-        $entries = $clean ? $this->cleanLogs() : $this->getLogs();
-
-        $logs = [];
-
-        foreach ( $entries as $entry ) {
-            $logs[] = $this->resolveLogMessage( null, $entry['message'], $entry['context'], $timestamp );
-        }
-
-        return $logs;
-    }
-
-    /**
-     * @param ?string              $level
-     * @param string               $message
-     * @param array<string, mixed> $context
-     * @param bool|string          $timestamp
-     * @param bool                 $highlight
-     *
-     * @return string
-     */
-    private function resolveLogMessage(
-        ?string     $level,
-        string      $message,
-        array       $context,
-        bool|string $timestamp,
-        bool        $highlight = false,
-    ) : string {
-        $level = $level ? \ucfirst( $level ).': ' : null;
-
-        if ( \str_contains( $message, '{' ) && \str_contains( $message, '}' ) ) {
-            foreach ( $context as $key => $value ) {
-                $value = $this->resolveLogValue( $value );
-                if ( $highlight ) {
-                    $value = $this->highlight( $value );
-                }
-                $message = \str_replace( "{{$key}}", $value, $message );
-            }
-
-            \preg_match_all( '#(?<tag>{.+?})#', $message, $inline, PREG_SET_ORDER | PREG_UNMATCHED_AS_NULL );
-
-            foreach ( $inline as $index => $match ) {
-                $getNamed = static fn( $value, $key ) => \is_string( $key ) ? $value : false;
-                $named    = \array_filter( $match, $getNamed, ARRAY_FILTER_USE_BOTH );
-
-                if ( $named ) {
-                    $inline[$index] = ['match' => \array_shift( $match ), ...$named];
-                }
-                else {
-                    unset( $inline[$index] );
-                }
-            }
-
-            foreach ( $inline as $tag ) {
-                if ( ! $tag['tag'] || ! $tag['match'] ) {
-                    continue;
-                }
-
-                $value = $this->resolveLogValue( \trim( $tag['tag'], '{}' ) );
-                if ( $highlight ) {
-                    $value = $this->highlight( $value );
-                }
-
-                $message = \str_replace( $tag['match'], $value, $message );
-            }
-        }
-
-        $timestamp = $timestamp === true ? DateTimeInterface::RFC3339 : $timestamp;
-        $time      = $timestamp ? '['.\date( $timestamp ).'] ' : '';
-
-        return "{$time}{$level}{$message}";
-    }
-
-    private function resolveLogValue( mixed $value ) : string
-    {
-        return match ( true ) {
-            \is_bool( $value ) => $value ? 'true' : 'false',
-            \is_scalar( $value )
-            || $value instanceof Stringable || \is_null( $value ) => (string) $value,
-            $value instanceof DateTimeInterface                   => $value->format( DateTimeInterface::RFC3339 ),
-            \is_object( $value )                                  => '[object '.\get_debug_type( $value ).']',
-            default                                               => '['.\gettype( $value ).']',
-        };
-    }
-
-    private function highlight( string $string ) : string
-    {
-        if ( \str_contains( $string, '::' ) ) {
-            $string = \str_replace( '::', '<span style="color: #fefefe">::</span>', $string );
-        }
-
-        $match = \strtolower( $string );
-        if ( $match === 'true' ) {
-            return '<b class="highlight-success">'.$string.'</b>';
-        }
-        if ( $match === 'false' ) {
-            return '<b class="highlight-danger">'.$string.'</b>';
-        }
-        if ( $match === 'null' ) {
-            return '<b class="highlight-warning">'.$string.'</b>';
-        }
-
-        if ( \strlen( $string ) < 12 || \is_numeric( $string ) ) {
-            return '<b class="highlight">'.$string.'</b>';
-        }
-
-        return '<span class="highlight">'.$string.'</span>';
+        return $clean ? $this->cleanLogs( true ) : $this->getLogs( true );
     }
 
     /**

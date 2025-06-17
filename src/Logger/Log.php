@@ -2,367 +2,173 @@
 
 declare(strict_types=1);
 
-namespace Northrook\Logger;
+namespace Core\Logger;
 
-use JetBrains\PhpStorm\Language;
-use Northrook\Logger;
-use Psr\Log\LoggerInterface;
-use Stringable, Throwable;
+use Core\Logger;
+use DateTimeInterface;
+use Stringable;
+use DateTimeImmutable;
+use BadMethodCallException;
 
 /**
- * Log events to the {@see Log::$inventory}.
- *
- * - Events are compliant with the {@see LoggerInterface}.
- *
- * @author  Martin Nielsen <mn@northrook.com>
- *
- * @link    https://github.com/northrook/logger
+ * @internal created by {@see Logger}
  */
-final class Log
+final readonly class Log implements Stringable
 {
-    private static LoggerInterface $logger;
+    public Level $level;
 
-    private static bool $enablePrecision = false;
-
-    private static int $precisionTimestamp;
-
-    private static ?int $precisionPreviousEntry = null;
+    public string $message;
 
     /**
-     * Set the {@see LoggerInterface} instance.
-     *
-     * @param LoggerInterface $logger          The {@see LoggerInterface} instance to use
-     * @param bool            $import          [true] Import the array from {@see LoggerInterface} if using the default {@see Logger}
-     * @param bool            $enablePrecision
-     *
-     * @return LoggerInterface The current set {@see LoggerInterface} instance
+     * @param int|Level|string       $level     = [ 'emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info', 'debug' ][$any]
+     * @param null|string|Stringable $message
+     * @param array<string, mixed>   $context
+     * @param null|float|int         $timestamp
      */
-    public static function setLogger(
-        LoggerInterface $logger,
-        bool            $enablePrecision = true,
-        bool            $import = true,
-    ) : LoggerInterface {
-        Log::$enablePrecision = $enablePrecision;
-        Log::$precisionTimestamp ??= \hrtime( true );
+    public function __construct(
+        int|Level|string       $level,
+        null|string|Stringable $message,
+        public array           $context = [],
+        public null|float|int  $timestamp = null,
+    ) {
+        $this->level = Level::resolve( $level );
 
-        if ( $import && isset( Log::$logger ) && $logger instanceof Logger ) {
-            $logger->import( Log::$logger );
-        }
+        $message = \trim( (string) $message );
 
-        return Log::$logger = $logger;
+        $this->message = $message
+                ?: 'Unknown log event at '.( new DateTimeImmutable() )->format( 'r' );
     }
 
-    /**
-     * # `E` Exception
-     * System has experienced an error.
-     *
-     * @param Throwable               $exception
-     * @param null|Level|string       $level
-     * @param null|string             $message
-     * @param array<array-key, mixed> $context
-     * @param null|bool               $precision
-     *
-     * @return void
-     */
-    public static function exception(
-        Throwable         $exception,
-        null|string|Level $level = null,
-        #[Language( 'Smarty' )]
-        ?string           $message = null,
-        array             $context = [],
-        ?bool             $precision = null,
-    ) : void {
-        $exceptionMessage = $exception->getMessage();
-        $exceptionLevel   = \strstr( $exceptionMessage, ':', true );
-
-        if ( $exceptionLevel !== false ) {
-            $exceptionMessage = \substr( $exceptionMessage, \strpos( $exceptionMessage, ':' ) + 1 );
-        }
-
-        try {
-            $exceptionLevel = $exceptionLevel ? Level::fromName( $exceptionLevel ) : Level::ERROR;
-        }
-        catch ( Throwable ) {
-            $exceptionLevel = Level::ERROR;
-        }
-
-        $level   ??= $exceptionLevel;
-        $message ??= $exceptionMessage;
-
-        if ( ! $message ) {
-            $type    = \get_debug_type( $exception );
-            $line    = $exception->getLine();
-            $file    = $exception->getFile();
-            $message = "{$type} thrown at line {$line} in {$file}. Trace: ".$exception->getTraceAsString();
-        }
-
-        $context['exception'] = $exception;
-
-        Log::entry( $level, $message, $context, $precision );
-    }
-
-    /**
-     * # `7` Emergency | `600`
-     * System is unusable.
-     *
-     * @param string|Stringable       $message
-     * @param array<array-key, mixed> $context
-     * @param null|bool               $precision
-     *
-     * @return void
-     */
-    public static function emergency(
-        #[Language( 'Smarty' )]
-        string|Stringable $message,
-        array             $context = [],
-        ?bool             $precision = null,
-    ) : void {
-        Log::entry( Level::EMERGENCY, $message, $context, $precision );
-    }
-
-    /**
-     * # `6` Alert | `550`.
-     *
-     * Action must be taken immediately.
-     *
-     * Example: Entire website down, database unavailable, etc. This should
-     * trigger the SMS alerts and wake you up.
-     *
-     * @param string|Stringable       $message
-     * @param array<array-key, mixed> $context
-     * @param null|bool               $precision
-     *
-     * @return void
-     */
-    public static function alert(
-        #[Language( 'Smarty' )]
-        string|Stringable $message,
-        array             $context = [],
-        ?bool             $precision = null,
-    ) : void {
-        Log::entry( Level::ALERT, $message, $context, $precision );
-    }
-
-    /**
-     * # `5` Critical | `500`.
-     *
-     * Critical conditions.
-     *
-     * Example: Application component unavailable, unexpected exception.
-     *
-     * @param string|Stringable       $message
-     * @param array<array-key, mixed> $context
-     * @param null|bool               $precision
-     *
-     * @return void
-     */
-    public static function critical(
-        #[Language( 'Smarty' )]
-        string|Stringable $message,
-        array             $context = [],
-        ?bool             $precision = null,
-    ) : void {
-        Log::entry( Level::CRITICAL, $message, $context, $precision );
-    }
-
-    /**
-     * # `4` Error | `400`.
-     *
-     * Runtime errors that do not require immediate action but should typically
-     * be logged and monitored.
-     *
-     * @param string|Stringable       $message
-     * @param array<array-key, mixed> $context
-     * @param null|bool               $precision
-     *
-     * @return void
-     */
-    public static function error(
-        #[Language( 'Smarty' )]
-        string|Stringable $message,
-        array             $context = [],
-        ?bool             $precision = null,
-    ) : void {
-        Log::entry( Level::ERROR, $message, $context, $precision );
-    }
-
-    /**
-     * # `3` Warning | `300`.
-     *
-     * Exceptional occurrences that are not errors.
-     *
-     * Example: Use of deprecated APIs, poor use of an API, undesirable things
-     * that are not necessarily wrong.
-     *
-     * @param string|Stringable       $message
-     * @param array<array-key, mixed> $context
-     * @param null|bool               $precision
-     *
-     * @return void
-     */
-    public static function warning(
-        #[Language( 'Smarty' )]
-        string|Stringable $message,
-        array             $context = [],
-        ?bool             $precision = null,
-    ) : void {
-        Log::entry( Level::WARNING, $message, $context, $precision );
-    }
-
-    /**
-     * # `2` Notice | `250`.
-     *
-     * Normal but significant events.
-     *
-     * @param string|Stringable       $message
-     * @param array<array-key, mixed> $context
-     * @param null|bool               $precision
-     *
-     * @return void
-     */
-    public static function notice(
-        #[Language( 'Smarty' )]
-        string|Stringable $message,
-        array             $context = [],
-        ?bool             $precision = null,
-    ) : void {
-        Log::entry( Level::NOTICE, $message, $context, $precision );
-    }
-
-    /**
-     * # `1` Info | `200`.
-     *
-     * Interesting events.
-     *
-     * Example: User logs in, SQL logs.
-     *
-     * @param string|Stringable       $message
-     * @param array<array-key, mixed> $context
-     * @param null|bool               $precision
-     *
-     * @return void
-     */
-    public static function info(
-        #[Language( 'Smarty' )]
-        string|Stringable $message,
-        array             $context = [],
-        ?bool             $precision = null,
-    ) : void {
-        Log::entry( Level::INFO, $message, $context, $precision );
-    }
-
-    /**
-     * # `0` Debug | `100`.
-     *
-     * Detailed debug information.
-     *
-     * @param string|Stringable       $message
-     * @param array<array-key, mixed> $context
-     * @param null|bool               $precision
-     *
-     * @return void
-     */
-    public static function debug(
-        #[Language( 'Smarty' )]
-        string|Stringable $message,
-        array             $context = [],
-        ?bool             $precision = null,
-    ) : void {
-        Log::entry( Level::DEBUG, $message, $context, $precision );
-    }
-
-    /**
-     * Logs with an arbitrary level.
-     *
-     * @param Level|string            $level     = [ 'emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info', 'debug' ][$any]
-     * @param string|Stringable       $message
-     * @param array<array-key, mixed> $context
-     * @param null|bool               $precision
-     *
-     * @return void
-     */
-    public static function entry(
-        string|Level      $level,
-        #[Language( 'Smarty' )]
-        string|Stringable $message,
-        array             $context = [],
-        ?bool             $precision = null,
-    ) : void {
-        if ( $precision ?? Log::$enablePrecision ) {
-            $context += Log::resolvePrecisionDelta();
-        }
-        Log::getLogger()->log(
-            Log::getLevel( $level )->name(),
-            \trim( (string) $message ),
-            $context,
-        );
-    }
-
-    /**
-     * Return the LoggerInterface instance.
-     *
-     * - If no LoggerInterface has been set, the default {@see Logger} will be used.
-     *
-     * @return LoggerInterface
-     */
-    private static function getLogger() : LoggerInterface
+    public function __toString() : string
     {
-        return Log::$logger ??= Log::setLogger( new Logger() );
+        return $this->resolve();
     }
 
-    private static function formatPrecisionDelta( null|int|float $hrTime ) : ?string
-    {
-        if ( ! $hrTime ) {
-            return null;
+    public function resolve(
+        bool $highlight = false,
+        bool $promoteBrackets = false,
+    ) : string {
+        $message = $this->message;
+
+        if ( \str_contains( $message, '{' ) && \str_contains( $message, '}' ) ) {
+            foreach ( $this->context as $key => $value ) {
+                $value = $this->resolveLogValue( $value );
+                if ( $highlight ) {
+                    $value = $this->highlight( $value );
+                }
+                $message = \str_replace( "{{$key}}", $value, $message );
+            }
+
+            if ( $promoteBrackets ) {
+                foreach ( $this->inlineBrackets( $message ) as $tag ) {
+                    if ( ! $tag['tag'] || ! $tag['match'] ) {
+                        continue;
+                    }
+
+                    $value = $this->resolveLogValue( \trim( $tag['tag'], '{}' ) );
+
+                    if ( $highlight ) {
+                        $value = $this->highlight( $value );
+                    }
+
+                    $message = \str_replace( $tag['match'], $value, $message );
+                }
+            }
         }
 
-        $time = (float) \number_format( $hrTime / 1_000_000, \strlen( (string) $hrTime ) );
+        return $message;
+    }
 
-        // If we have leading zeros
-        // if ( $time < 1 && $decimals === null ) {
-        //     $decimals ??= 2;
-        //     $floating = substr( (string) $time, 2 );
-        //     dump( $floating, strlen( $floating ),strlen( ltrim( $floating, '0' ) ),
-        //           strlen( $floating ) - strlen( ltrim( $floating, '0' ) ));
-        //     $decimals += strlen( $floating ) - strlen( ltrim( $floating, '0' ) );
-        // }
-
-        $time = \number_format( $time, 4, '.', '' );
-
-        $time = \str_pad( $time, 4, '0' );
-
-        return $time ? $time.'ms' : null;
+    private function resolveLogValue( mixed $value ) : string
+    {
+        return match ( true ) {
+            \is_bool( $value ) => $value ? 'true' : 'false',
+            \is_scalar( $value )
+            || $value instanceof Stringable || \is_null( $value ) => (string) $value,
+            $value instanceof DateTimeInterface                   => $value->format( DateTimeInterface::RFC3339 ),
+            \is_object( $value )                                  => '[object '.\get_debug_type( $value ).']',
+            default                                               => '['.\gettype( $value ).']',
+        };
     }
 
     /**
-     * @return array{"precision.hrTime": mixed, "precision.hrDelta": mixed, "precision.deltaMs": null|string, "precision.offsetMs": null|string}
+     * @param string $message
+     *
+     * @return string[][]
      */
-    private static function resolvePrecisionDelta() : array
+    private function inlineBrackets( string $message ) : array
     {
-        // The current hrtime
-        $precisionTime   = \hrtime( true );
-        $precisionDelta  = $precisionTime                                - Log::$precisionTimestamp;
-        $precisionOffset = Log::$precisionPreviousEntry ? $precisionTime - Log::$precisionPreviousEntry : null;
+        \preg_match_all( '#(?<tag>{.+?})#', $message, $inline, PREG_SET_ORDER | PREG_UNMATCHED_AS_NULL );
 
-        Log::$precisionPreviousEntry = $precisionTime;
+        foreach ( $inline as $index => $match ) {
+            $getNamed = static fn( $value, $key ) => \is_string( $key ) ? $value : false;
+            $named    = \array_filter( $match, $getNamed, ARRAY_FILTER_USE_BOTH );
 
+            if ( $named ) {
+                $inline[$index] = ['match' => \array_shift( $match ), ...$named];
+            }
+            else {
+                unset( $inline[$index] );
+            }
+        }
+
+        return $inline;
+    }
+
+    private function highlight( string $string ) : string
+    {
+        if ( \str_contains( $string, '::' ) ) {
+            $string = \str_replace( '::', '<span style="color: #fefefe">::</span>', $string );
+        }
+
+        $match = \strtolower( $string );
+        if ( $match === 'true' ) {
+            return '<b class="highlight-success">'.$string.'</b>';
+        }
+        if ( $match === 'false' ) {
+            return '<b class="highlight-danger">'.$string.'</b>';
+        }
+        if ( $match === 'null' ) {
+            return '<b class="highlight-warning">'.$string.'</b>';
+        }
+
+        if ( \strlen( $string ) < 12 || \is_numeric( $string ) ) {
+            return '<b class="highlight">'.$string.'</b>';
+        }
+
+        return '<span class="highlight">'.$string.'</span>';
+    }
+
+    /**
+     * @return array{
+     *     level: string,
+     *     message: string,
+     *     context: array<string,mixed>,
+     *     timestamp: null|float|int
+     * }
+     */
+    public function toArray() : array
+    {
         return [
-            'precision.hrTime'   => $precisionTime, // The current hrtime
-            'precision.hrDelta'  => $precisionDelta,
-            'precision.deltaMs'  => Log::formatPrecisionDelta( $precisionDelta ),
-            'precision.offsetMs' => Log::formatPrecisionDelta( $precisionOffset ),
+            'level'     => $this->level->name(),
+            'message'   => $this->message,
+            'context'   => $this->context,
+            'timestamp' => $this->timestamp,
         ];
     }
 
-    /**
-     * Resolve a given {@see \Psr\Log\LogLevel} or string to a valid {@see Level}.
-     *
-     * @param Level|string $level
-     *
-     * @return Level
-     */
-    private static function getLevel( string|Level $level ) : Level
+    public function __serialize() : array
     {
-        return $level instanceof Level ? $level : Level::fromName( $level );
+        throw new BadMethodCallException( 'Log entries cannot be serialized.' );
+    }
+
+    public function __clone() : void
+    {
+        throw new BadMethodCallException( 'Log entries cannot be cloned.' );
+    }
+
+    public function __unserialize( array $data ) : void
+    {
+        throw new BadMethodCallException( 'Log entries cannot be unserialized.' );
     }
 }

@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Northrook\Logger;
+namespace Core\Logger;
 
+use InvalidArgumentException;
 use ValueError;
 
 /**
@@ -74,6 +75,16 @@ enum Level : int
         550 => 'alert',
         600 => 'emergency',
     ];
+
+    public static function resolve( mixed $level ) : self
+    {
+        return match ( true ) {
+            $level instanceof Level => $level,
+            \is_numeric( $level )   => Level::from( (int) $level ),
+            \is_string( $level )    => Level::fromName( $level ),
+            default                 => throw new InvalidArgumentException( 'Invalid log level.' ),
+        };
+    }
 
     public static function fromName( string $name ) : self
     {
